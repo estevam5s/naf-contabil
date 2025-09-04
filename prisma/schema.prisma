@@ -1,0 +1,150 @@
+// Schema do banco de dados para o sistema NAF (Núcleo de Apoio Contábil Fiscal)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum para tipos de usuário
+enum UserRole {
+  ALUNO
+  PROFESSOR
+  COORDENADOR
+}
+
+// Enum para status de agendamento
+enum AppointmentStatus {
+  AGENDADO
+  CONFIRMADO
+  CANCELADO
+  CONCLUIDO
+  NAO_COMPARECEU
+}
+
+// Enum para status de serviço
+enum ServiceStatus {
+  ATIVO
+  INATIVO
+}
+
+// Modelo de usuário
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  password    String
+  role        UserRole
+  phone       String?
+  cpf         String?  @unique
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  appointments    Appointment[]
+  assistances     Assistance[]
+  createdServices Service[]
+
+  @@map("users")
+}
+
+// Modelo de serviços NAF
+model Service {
+  id          String        @id @default(cuid())
+  name        String
+  description String
+  category    String
+  status      ServiceStatus @default(ATIVO)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdById String
+
+  // Relacionamentos
+  createdBy    User          @relation(fields: [createdById], references: [id])
+  appointments Appointment[]
+  assistances  Assistance[]
+
+  @@map("services")
+}
+
+// Modelo de agendamentos
+model Appointment {
+  id          String            @id @default(cuid())
+  userId      String
+  serviceId   String
+  dateTime    DateTime
+  status      AppointmentStatus @default(AGENDADO)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relacionamentos
+  user    User    @relation(fields: [userId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("appointments")
+}
+
+// Modelo de assistências prestadas
+model Assistance {
+  id               String   @id @default(cuid())
+  userId           String
+  serviceId        String
+  assistedById     String
+  description      String
+  documents        String[] // Array de URLs dos documentos
+  institutionName  String?  // Para casos de apoio a instituições
+  institutionType  String?
+  beneficiariesCount Int?   // Número de beneficiários atendidos
+  startDate        DateTime
+  endDate          DateTime?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relacionamentos
+  user        User    @relation(fields: [userId], references: [id])
+  service     Service @relation(fields: [serviceId], references: [id])
+  assistedBy  User    @relation(fields: [assistedById], references: [id], name: "AssistedBy")
+
+  @@map("assistances")
+}
+
+// Modelo para boas práticas
+model BestPractice {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String
+  impact      String
+  results     String
+  lessons     String
+  attachments String[] // Array de URLs dos anexos
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("best_practices")
+}
+
+// Modelo para configurações do sistema
+model Settings {
+  id                String   @id @default(cuid())
+  emailSmtp         String?
+  emailPort         Int?
+  emailUser         String?
+  emailPassword     String?
+  notificationEmail String?
+  systemName        String   @default("NAF - Núcleo de Apoio Contábil Fiscal")
+  systemLogo        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("settings")
+}
