@@ -21,23 +21,66 @@ export default function RegisterPage() {
     zipCode: ''
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError('')
+    setSuccess('')
     
     // Validação básica
     if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem')
+      setError('As senhas não coincidem')
       setIsLoading(false)
       return
     }
     
-    // Aqui será implementada a lógica de cadastro
-    setTimeout(() => {
+    if (formData.password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres')
       setIsLoading(false)
-      // Redirect to login or dashboard
-    }, 1000)
+      return
+    }
+    
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          cpf: formData.cpf,
+          role: formData.role,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode
+        }),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao cadastrar usuário')
+      }
+      
+      setSuccess('Usuário cadastrado com sucesso! Redirecionando...')
+      
+      // Redirecionar para login após 2 segundos
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 2000)
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao cadastrar usuário')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -72,6 +115,19 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Mensagens de Erro e Sucesso */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+            
+            {success && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-green-600 text-sm">{success}</p>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Informações Básicas */}
               <div className="space-y-4">
