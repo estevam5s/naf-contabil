@@ -6,16 +6,15 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  output: 'standalone',
   experimental: {
-    outputFileTracingExcludes: {
-      '*': [
-        'node_modules/@swc/core-linux-x64-gnu',
-        'node_modules/@swc/core-linux-x64-musl',
-        'node_modules/@esbuild/linux-x64',
-      ],
-    },
+    serverComponentsExternalPackages: ['bcryptjs']
+  },
+  images: {
+    domains: ['localhost'],
+    unoptimized: true
   },
 };
+
+module.exports = nextConfig;
 
 module.exports = nextConfig;

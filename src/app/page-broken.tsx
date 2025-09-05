@@ -1,26 +1,168 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
-import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock } from 'lucide-react'
+import { Calculator, FileText, Users, ArrowRight, Phone } from 'lucide-react'
 
 export default function Home() {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center gap-3">
+              <Calculator className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">NAF Contábil</h1>
+                <p className="text-sm text-gray-600">Núcleo de Apoio Contábil e Fiscal</p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <Link href="/login">
+                <Button variant="outline" size="sm">Entrar</Button>
+              </Link>
+              <Link href="/register">
+                <Button>Cadastrar-se</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            Apoio Contábil e Fiscal
+            <span className="block text-blue-600">Gratuito e Profissional</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            O NAF oferece orientação gratuita em serviços contábeis e fiscais para 
+            pessoas físicas e jurídicas, prestado por estudantes supervisionados 
+            por professores especializados.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                Solicitar Atendimento
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button size="lg" variant="outline">
+                Acessar Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Nossos Serviços
+            </h2>
+            <p className="text-xl text-gray-600">
+              Atendimento completo para suas necessidades fiscais e contábeis
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
+                  <Calculator className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl">Declaração de IR</CardTitle>
+                <CardDescription>Orientação completa para Imposto de Renda</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-green-100 text-green-600 flex items-center justify-center mb-4">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl">Cadastro CPF/CNPJ</CardTitle>
+                <CardDescription>Auxílio em cadastros e regularizações</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl">MEI e Simples Nacional</CardTitle>
+                <CardDescription>Orientações para microempreendedores</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 bg-blue-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">2000+</div>
+              <div className="text-blue-100">Atendimentos Realizados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">95%</div>
+              <div className="text-blue-100">Satisfação dos Usuários</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">21</div>
+              <div className="text-blue-100">Serviços Disponíveis</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">24h</div>
+              <div className="text-blue-100">Suporte Online</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white border-t">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center gap-2 mb-4 md:mb-0">
+              <Calculator className="h-6 w-6 text-blue-600" />
+              <span className="font-semibold text-gray-900">NAF Contábil</span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span>© 2025 NAF Contábil</span>
+              <span>•</span>
+              <span>Todos os direitos reservados</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+  )
+}
   const services = [
     {
       icon: Calculator,
-      title: "Declaração IR",
-      description: "Auxílio na declaração do Imposto de Renda",
+      title: "Declaração de IR",
+      description: "Orientação completa para Imposto de Renda",
       color: "bg-blue-100 text-blue-600"
     },
     {
       icon: FileText,
-      title: "Cadastro MEI",
-      description: "Registro de Microempreendedor Individual",
+      title: "MEI",
+      description: "Cadastro e manutenção do Microempreendedor Individual",
       color: "bg-green-100 text-green-600"
     },
     {
       icon: Users,
-      title: "Consultoria Fiscal",
-      description: "Orientações sobre obrigações fiscais",
+      title: "CPF",
+      description: "Inscrição e regularização do CPF",
       color: "bg-purple-100 text-purple-600"
     },
     {
