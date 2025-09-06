@@ -1,19 +1,25 @@
 [build]
-  command = "npm ci && npm run build"
+  command = "npm ci && npm run build && node netlify-config.js"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
   NEXT_TELEMETRY_DISABLED = "1"
-  # IMPORTANTE: Configure estas variáveis no painel do Netlify
-  # NEXTAUTH_URL = "https://naf-contabil.netlify.app"
-  # NEXTAUTH_SECRET = "sua-chave-secreta-super-forte" 
-  # DATABASE_URL = "postgresql://neondb_owner:password@xxxxx.neon.tech/neondb?sslmode=require"
   NODE_ENV = "production"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/_next/static/*"
+  to = "/_next/static/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"
