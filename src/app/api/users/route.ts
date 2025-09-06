@@ -4,6 +4,8 @@ import { getServerSession } from 'next-auth'
 import bcrypt from 'bcryptjs'
 
 // GET - Listar usuários com filtros
+
+export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession()

@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock } from 'lucide-react'
+import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar } from 'lucide-react'
 
 export default function Home() {
   const services = [
@@ -9,33 +10,58 @@ export default function Home() {
       icon: Calculator,
       title: "Declaração IR",
       description: "Auxílio na declaração do Imposto de Renda",
-      color: "bg-blue-100 text-blue-600"
+      color: "bg-blue-100 text-blue-600",
+      available: true
     },
     {
       icon: FileText,
       title: "Cadastro MEI",
       description: "Registro de Microempreendedor Individual",
-      color: "bg-green-100 text-green-600"
+      color: "bg-green-100 text-green-600",
+      available: true
     },
     {
       icon: Users,
       title: "Consultoria Fiscal",
       description: "Orientações sobre obrigações fiscais",
-      color: "bg-purple-100 text-purple-600"
+      color: "bg-purple-100 text-purple-600",
+      available: true
     },
     {
       icon: Phone,
       title: "Orientação Tributária",
       description: "Consultoria sobre questões fiscais",
-      color: "bg-orange-100 text-orange-600"
+      color: "bg-orange-100 text-orange-600",
+      available: true
+    },
+    {
+      icon: Shield,
+      title: "Regularização",
+      description: "Auxílio na regularização fiscal",
+      color: "bg-red-100 text-red-600",
+      available: true
+    },
+    {
+      icon: TrendingUp,
+      title: "Planejamento",
+      description: "Planejamento tributário empresarial",
+      color: "bg-indigo-100 text-indigo-600",
+      available: true
     }
   ]
 
   const stats = [
-    { number: "2000+", label: "Atendimentos Realizados" },
-    { number: "95%", label: "Satisfação dos Usuários" },
-    { number: "21", label: "Serviços Disponíveis" },
-    { number: "24h", label: "Suporte Online" }
+    { number: "2000+", label: "Atendimentos Realizados", icon: Users },
+    { number: "95%", label: "Satisfação dos Usuários", icon: TrendingUp },
+    { number: "21", label: "Serviços Disponíveis", icon: FileText },
+    { number: "24h", label: "Suporte Online", icon: Clock }
+  ]
+
+  const contactInfo = [
+    { icon: MapPin, label: "Endereço", value: "Campus Universitário - NAF" },
+    { icon: Phone, label: "Telefone", value: "(XX) XXXX-XXXX" },
+    { icon: Mail, label: "Email", value: "naf@instituicao.edu.br" },
+    { icon: Calendar, label: "Horário", value: "Seg-Sex: 8h às 17h" }
   ]
 
   return (
@@ -96,12 +122,20 @@ export default function Home() {
       <section className="py-16 bg-white/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">{stat.number}</div>
-                <div className="text-gray-600">{stat.label}</div>
-              </div>
-            ))}
+            {stats.map((stat, index) => {
+              const IconComponent = stat.icon
+              return (
+                <div key={index} className="text-center group">
+                  <div className="flex justify-center mb-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                      <IconComponent className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-600 mb-2">{stat.number}</div>
+                  <div className="text-gray-600 text-sm">{stat.label}</div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -122,8 +156,15 @@ export default function Home() {
             {services.map((service, index) => (
               <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg ${service.color} flex items-center justify-center mb-4`}>
-                    <service.icon className="h-6 w-6" />
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`w-12 h-12 rounded-lg ${service.color} flex items-center justify-center`}>
+                      <service.icon className="h-6 w-6" />
+                    </div>
+                    {service.available && (
+                      <Badge variant="secondary" className="text-xs">
+                        Disponível
+                      </Badge>
+                    )}
                   </div>
                   <CardTitle className="text-lg">{service.title}</CardTitle>
                   <CardDescription>{service.description}</CardDescription>
@@ -185,6 +226,45 @@ export default function Home() {
                 Zero redundâncias, navegação otimizada e todas as integrações funcionando perfeitamente.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section className="py-20 bg-blue-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Entre em Contato
+            </h2>
+            <p className="text-xl text-blue-100">
+              Estamos aqui para ajudar com seus problemas contábeis e fiscais
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {contactInfo.map((contact, index) => (
+              <Card key={index} className="text-center">
+                <CardHeader>
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <contact.icon className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-lg mb-2">{contact.label}</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    {contact.value}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link href="/schedule">
+              <Button size="lg" variant="secondary">
+                <Calendar className="mr-2 h-5 w-5" />
+                Agendar Atendimento
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
