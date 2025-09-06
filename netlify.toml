@@ -1,21 +1,19 @@
 [build]
   command = "npm ci && npm run build"
   publish = ".next"
-  functions = ".netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
+  NEXT_TELEMETRY_DISABLED = "1"
   # IMPORTANTE: Configure estas variáveis no painel do Netlify
-  # NEXTAUTH_URL = "https://seu-site.netlify.app"
-  # NEXTAUTH_SECRET = "sua-chave-secreta-super-forte"
+  # NEXTAUTH_URL = "https://naf-contabil.netlify.app"
+  # NEXTAUTH_SECRET = "sua-chave-secreta-super-forte" 
   # DATABASE_URL = "postgresql://neondb_owner:password@xxxxx.neon.tech/neondb?sslmode=require"
   NODE_ENV = "production"
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [[redirects]]
   from = "/*"
@@ -33,10 +31,3 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
