@@ -1,20 +1,10 @@
 [build]
   command = "npm ci && npm run build"
   publish = ".next"
-  functions = ".netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
-  NEXTAUTH_URL = "https://naf-contabil.netlify.app"
-  NEXTAUTH_SECRET = "naf-secret-2025-super-seguro-production"
-  DATABASE_URL = "postgresql://neondb_owner:password@ep-ancient-brook-48988052.us-east-1.aws.neon.tech/neondb?sslmode=require"
-  NODE_ENV = "production"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
 
 [[redirects]]
   from = "/*"
