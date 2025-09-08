@@ -2,49 +2,50 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar } from 'lucide-react'
+import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar, BookOpen, BarChart3, UserCheck, Zap } from 'lucide-react'
+import NAFServicesShowcase from "@/components/NAFServicesShowcase"
 
 export default function Home() {
   const services = [
     {
       icon: Calculator,
-      title: "Declaração IR",
-      description: "Auxílio na declaração do Imposto de Renda",
+      title: "Declaração de IR",
+      description: "Orientação completa para declaração do Imposto de Renda",
       color: "bg-blue-100 text-blue-600",
       available: true
     },
     {
       icon: FileText,
-      title: "Cadastro MEI",
-      description: "Registro de Microempreendedor Individual",
+      title: "Cadastro de CPF",
+      description: "Inscrição, alteração e regularização de CPF",
       color: "bg-green-100 text-green-600",
       available: true
     },
     {
       icon: Users,
-      title: "Consultoria Fiscal",
-      description: "Orientações sobre obrigações fiscais",
+      title: "E-Social Doméstico",
+      description: "Cadastro e gestão de empregados domésticos",
       color: "bg-purple-100 text-purple-600",
       available: true
     },
     {
       icon: Phone,
-      title: "Orientação Tributária",
-      description: "Consultoria sobre questões fiscais",
+      title: "Orientação MEI",
+      description: "Abertura e gestão de Microempreendedor Individual",
       color: "bg-orange-100 text-orange-600",
       available: true
     },
     {
       icon: Shield,
-      title: "Regularização",
-      description: "Auxílio na regularização fiscal",
+      title: "Certidões Negativas",
+      description: "Emissão de certidões de regularidade fiscal",
       color: "bg-red-100 text-red-600",
       available: true
     },
     {
       icon: TrendingUp,
-      title: "Planejamento",
-      description: "Planejamento tributário empresarial",
+      title: "Parcelamento de Débitos",
+      description: "Orientação sobre parcelamento tributário",
       color: "bg-indigo-100 text-indigo-600",
       available: true
     }
@@ -95,23 +96,28 @@ export default function Home() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Apoio Contábil e Fiscal
-            <span className="text-blue-600 block">Eficaz e Perfeito</span>
+            Núcleo de Apoio Contábil e Fiscal
+            <span className="text-blue-600 block">Atendimento Gratuito</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Sistema integrado e consolidado para todos os serviços NAF. 
-            Uma plataforma unificada sem redundâncias, com funcionalidades avançadas.
+            Oferecemos orientação fiscal e contábil gratuita para pessoas físicas, microempreendedores individuais, 
+            pequenos proprietários rurais e organizações da sociedade civil.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/dashboard">
+            <Link href="/naf-scheduling">
               <Button size="lg" className="w-full sm:w-auto">
-                Acessar Sistema Completo
+                Agendar Atendimento
                 <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/eligibility">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                Verificar Elegibilidade
               </Button>
             </Link>
             <Link href="/login">
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Fazer Login
+                Portal de Acesso
               </Button>
             </Link>
           </div>
@@ -152,33 +158,70 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`w-12 h-12 rounded-lg ${service.color} flex items-center justify-center`}>
-                      <service.icon className="h-6 w-6" />
-                    </div>
-                    {service.available && (
-                      <Badge variant="secondary" className="text-xs">
-                        Disponível
-                      </Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-lg">{service.title}</CardTitle>
-                  <CardDescription>{service.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+          <NAFServicesShowcase />
           
           <div className="text-center mt-12">
-            <Link href="/dashboard">
+            <Link href="/services">
               <Button size="lg">
-                Ver Todos os Serviços
+                Ver Todos os Serviços NAF
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Access Section */}
+      <section className="py-16 bg-gradient-to-r from-blue-600 to-indigo-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Acesso Rápido
+            </h2>
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+              Portais dedicados para cada tipo de usuário
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-6">
+            <Link href="/student-portal">
+              <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <UserCheck className="h-12 w-12 text-white mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Portal do Estudante</h3>
+                  <p className="text-blue-100 text-sm">Gerencie suas atividades e treinamentos</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link href="/coordinator-dashboard">
+              <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <BarChart3 className="h-12 w-12 text-white mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Dashboard Coordenador</h3>
+                  <p className="text-blue-100 text-sm">Métricas e análises avançadas</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link href="/fiscal-guides">
+              <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <BookOpen className="h-12 w-12 text-white mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Guias Fiscais</h3>
+                  <p className="text-blue-100 text-sm">Legislações e procedimentos</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link href="/naf-management">
+              <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <Zap className="h-12 w-12 text-white mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Gestão NAF</h3>
+                  <p className="text-blue-100 text-sm">Controle completo de operações</p>
+                </CardContent>
+              </Card>
             </Link>
           </div>
         </div>

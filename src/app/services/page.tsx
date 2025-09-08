@@ -50,14 +50,42 @@ export default function ServicesPage() {
 
   const getCategoryInfo = (cat: string) => {
     switch (cat) {
-      case 'TRIBUTARIO': 
-        return { name: '💰 Serviços Tributários', color: 'border-l-blue-500', icon: '💰' }
-      case 'EMPRESARIAL': 
-        return { name: '🏢 Serviços Empresariais', color: 'border-l-green-500', icon: '🏢' }
-      case 'DOCUMENTOS': 
-        return { name: '📄 Documentação', color: 'border-l-yellow-500', icon: '📄' }
-      case 'TRABALHISTA': 
-        return { name: '👥 Serviços Trabalhistas', color: 'border-l-purple-500', icon: '👥' }
+      case 'CADASTROS_DOCUMENTOS': 
+        return { name: '� Cadastros e Documentos', color: 'border-l-blue-500', icon: '📋' }
+      case 'IMPOSTO_RENDA': 
+        return { name: '💰 Imposto de Renda', color: 'border-l-green-500', icon: '💰' }
+      case 'MEI_EMPRESAS': 
+        return { name: '🏢 MEI e Empresas', color: 'border-l-purple-500', icon: '🏢' }
+      case 'ESOCIAL_TRABALHISTA': 
+        return { name: '👥 E-Social e Trabalhista', color: 'border-l-orange-500', icon: '👥' }
+      case 'CERTIDOES_CONSULTAS': 
+        return { name: '📜 Certidões e Consultas', color: 'border-l-yellow-500', icon: '📜' }
+      case 'PAGAMENTOS_PARCELAMENTOS': 
+        return { name: '� Pagamentos e Parcelamentos', color: 'border-l-red-500', icon: '💳' }
+      case 'COMERCIO_EXTERIOR': 
+        return { name: '🌍 Comércio Exterior', color: 'border-l-cyan-500', icon: '🌍' }
+      case 'ISENCOES_ESPECIAIS': 
+        return { name: '⭐ Isenções Especiais', color: 'border-l-pink-500', icon: '⭐' }
+      case 'RURAL_ITR': 
+        return { name: '🌾 Área Rural e ITR', color: 'border-l-emerald-500', icon: '🌾' }
+      case 'ACESSO_DIGITAL': 
+        return { name: '🔐 Acesso Digital', color: 'border-l-indigo-500', icon: '�' }
+      case 'PREVIDENCIA_TRABALHISTA': 
+        return { name: '⚖️ Previdência e Trabalhista', color: 'border-l-slate-500', icon: '⚖️' }
+      case 'REGULARIZACAO_FISCAL': 
+        return { name: '� Regularização Fiscal', color: 'border-l-teal-500', icon: '🔧' }
+      case 'SIMPLES_MEI': 
+        return { name: '📊 Simples Nacional e MEI', color: 'border-l-violet-500', icon: '📊' }
+      case 'AREA_RURAL': 
+        return { name: '🚜 Área Rural', color: 'border-l-lime-500', icon: '🚜' }
+      case 'INTERNACIONAL': 
+        return { name: '🌎 Área Internacional', color: 'border-l-sky-500', icon: '🌎' }
+      case 'PESSOA_JURIDICA': 
+        return { name: '🏛️ Pessoa Jurídica', color: 'border-l-amber-500', icon: '🏛️' }
+      case 'PROCESSOS_ADMINISTRATIVOS': 
+        return { name: '⚖️ Processos Administrativos', color: 'border-l-rose-500', icon: '⚖️' }
+      case 'ATENDIMENTO_PRESENCIAL': 
+        return { name: '🏪 Atendimento Presencial', color: 'border-l-gray-500', icon: '🏪' }
       default: 
         return { name: cat, color: 'border-l-gray-500', icon: '📋' }
     }
