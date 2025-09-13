@@ -312,74 +312,170 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="bg-blue-600 p-2 rounded-lg">
-                  <Calculator className="h-5 w-5" />
+      <footer className="bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 text-white">
+        {/* Main Footer Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* Brand Section */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg">
+                  <Calculator className="h-7 w-7" />
                 </div>
-                <span className="text-xl font-bold">NAF Estácio Florianópolis</span>
+                <div>
+                  <h2 className="text-2xl font-bold">NAF Estácio Florianópolis</h2>
+                  <p className="text-blue-300 text-sm font-medium">Núcleo de Apoio Contábil e Fiscal</p>
+                </div>
               </div>
-              <p className="text-gray-400 text-sm">
-                Núcleo de Apoio Contábil e Fiscal - Faculdade Estácio Florianópolis oferecendo orientação gratuita.
+              <p className="text-gray-300 text-sm leading-relaxed mb-6 max-w-md">
+                Faculdade Estácio Florianópolis oferece orientação fiscal e contábil gratuita para
+                pessoas físicas, microempreendedores individuais, pequenos proprietários rurais
+                e organizações da sociedade civil.
               </p>
-              <div className="flex space-x-4 mt-6">
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Facebook className="h-6 w-6" />
-                </Link>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Instagram className="h-6 w-6" />
-                </Link>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Linkedin className="h-6 w-6" />
-                </Link>
+
+              {/* Statistics */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/5 backdrop-blur rounded-lg p-3 border border-white/10">
+                  <div className="text-blue-400 text-xl font-bold">2000+</div>
+                  <div className="text-gray-400 text-xs">Atendimentos</div>
+                </div>
+                <div className="bg-white/5 backdrop-blur rounded-lg p-3 border border-white/10">
+                  <div className="text-green-400 text-xl font-bold">95%</div>
+                  <div className="text-gray-400 text-xs">Satisfação</div>
+                </div>
               </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Acesso Rápido</h3>
-              <div className="space-y-2">
-                <Link href="/dashboard" className="block text-gray-400 hover:text-white text-sm">
-                  Dashboard Principal
+
+              {/* Social Media */}
+              <div className="flex space-x-3">
+                <Link href="#" className="bg-white/5 hover:bg-blue-600 p-3 rounded-lg transition-all duration-300 hover:scale-105">
+                  <Facebook className="h-5 w-5" />
                 </Link>
-                <Link href="/login" className="block text-gray-400 hover:text-white text-sm">
-                  Login
+                <Link href="#" className="bg-white/5 hover:bg-pink-600 p-3 rounded-lg transition-all duration-300 hover:scale-105">
+                  <Instagram className="h-5 w-5" />
                 </Link>
-                <Link href="/naf-scheduling" className="block text-gray-400 hover:text-white text-sm">
-                  Agendar Atendimento
-                </Link>
-                <Link href="/services" className="block text-gray-400 hover:text-white text-sm">
-                  Nossos Serviços
-                </Link>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Legal</h3>
-              <div className="space-y-2">
-                <Link href="/privacy-policy" className="block text-gray-400 hover:text-white text-sm">
-                  Política de Privacidade
-                </Link>
-                <Link href="/terms-of-service" className="block text-gray-400 hover:text-white text-sm">
-                  Termos de Serviço
+                <Link href="#" className="bg-white/5 hover:bg-blue-700 p-3 rounded-lg transition-all duration-300 hover:scale-105">
+                  <Linkedin className="h-5 w-5" />
                 </Link>
               </div>
             </div>
 
+            {/* Services */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Contato</h3>
-              <div className="space-y-2 text-gray-400 text-sm">
-                <p>Email: naf@estacio.br</p>
-                <p>Telefone: (48) 98461-4449</p>
-                <p>Endereço: Faculdade Estácio Florianópolis - NAF</p>
+              <h3 className="text-lg font-semibold mb-6 text-white flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-400" />
+                Serviços
+              </h3>
+              <div className="space-y-3">
+                <Link href="/services" className="block text-gray-300 hover:text-blue-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Declaração de IR</span>
+                </Link>
+                <Link href="/services" className="block text-gray-300 hover:text-blue-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Cadastro de CPF</span>
+                </Link>
+                <Link href="/services" className="block text-gray-300 hover:text-blue-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Orientação MEI</span>
+                </Link>
+                <Link href="/services" className="block text-gray-300 hover:text-blue-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ E-Social Doméstico</span>
+                </Link>
+                <Link href="/services" className="block text-gray-300 hover:text-blue-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Ver todos os serviços</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Access */}
+            <div>
+              <h3 className="text-lg font-semibold mb-6 text-white flex items-center gap-2">
+                <Users className="h-5 w-5 text-green-400" />
+                Acesso Rápido
+              </h3>
+              <div className="space-y-3">
+                <Link href="/student-portal" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Portal do Estudante</span>
+                </Link>
+                <Link href="/coordinator-dashboard" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Dashboard Coordenador</span>
+                </Link>
+                <Link href="/naf-management" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Gestão NAF</span>
+                </Link>
+                <Link href="/naf-scheduling" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Agendar Atendimento</span>
+                </Link>
+                <Link href="/fiscal-guides" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">
+                  <span className="group-hover:translate-x-1 inline-block transition-transform">→ Guias Fiscais</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h3 className="text-lg font-semibold mb-6 text-white flex items-center gap-2">
+                <Phone className="h-5 w-5 text-orange-400" />
+                Contato
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="text-gray-300 text-sm font-medium">Endereço</p>
+                    <p className="text-gray-400 text-xs">Faculdade Estácio Florianópolis</p>
+                    <p className="text-gray-400 text-xs">Núcleo de Apoio Fiscal - NAF</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Phone className="h-4 w-4 text-orange-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-gray-300 text-sm font-medium">Telefone</p>
+                    <p className="text-blue-400 text-sm font-semibold">(48) 98461-4449</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 text-orange-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-gray-300 text-sm font-medium">Email</p>
+                    <p className="text-blue-400 text-sm">naf@estacio.br</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 text-orange-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-gray-300 text-sm font-medium">Horário</p>
+                    <p className="text-gray-400 text-sm">Seg-Sex: 8h às 17h</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            <p>&copy; 2025 NAF Estácio Florianópolis. Todos os direitos reservados.</p>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="border-t border-white/10 bg-black/20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <div className="flex items-center gap-4 mb-4 md:mb-0">
+                <p className="text-gray-400 text-sm">
+                  &copy; 2025 NAF Estácio Florianópolis. Todos os direitos reservados.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <Link href="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  Política de Privacidade
+                </Link>
+                <Link href="/terms-of-service" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  Termos de Uso
+                </Link>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Shield className="h-3 w-3" />
+                  <span>Site Seguro</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </footer>

@@ -162,7 +162,7 @@ const MainNavigation = () => {
               <Calculator className="h-6 w-6" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-gray-900">NAF Contábil</h1>
+              <h1 className="text-xl font-bold text-gray-900">NAF Estácio Florianópolis</h1>
               <p className="text-xs text-gray-600">Núcleo de Apoio Fiscal</p>
             </div>
           </Link>
