@@ -46,7 +46,12 @@ const MainNavigation = () => {
 
   // Fechar dropdowns ao clicar fora
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      // Não fechar se o clique foi dentro de um dropdown ou em um link
+      if (target.closest('.nav-dropdown') || target.closest('.dropdown-trigger')) {
+        return
+      }
       setDropdowns({ portals: false, services: false, management: false })
     }
 
@@ -61,6 +66,10 @@ const MainNavigation = () => {
       management: false,
       [dropdown]: !prev[dropdown]
     }))
+  }
+
+  const closeAllDropdowns = () => {
+    setDropdowns({ portals: false, services: false, management: false })
   }
 
   // Rotas principais organizadas por categoria
@@ -186,7 +195,7 @@ const MainNavigation = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 dropdown-trigger"
                 onClick={(e) => {
                   e.stopPropagation()
                   toggleDropdown('portals')
@@ -208,6 +217,7 @@ const MainNavigation = () => {
                         className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                           isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                         }`}
+                        onClick={closeAllDropdowns}
                       >
                         <IconComponent className="h-4 w-4 text-gray-600" />
                         <div className="flex-1">
@@ -229,7 +239,7 @@ const MainNavigation = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 dropdown-trigger"
                 onClick={(e) => {
                   e.stopPropagation()
                   toggleDropdown('services')
@@ -251,6 +261,7 @@ const MainNavigation = () => {
                         className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                           isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                         }`}
+                        onClick={closeAllDropdowns}
                       >
                         <IconComponent className="h-4 w-4 text-gray-600" />
                         <div className="flex-1">
@@ -269,7 +280,7 @@ const MainNavigation = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 dropdown-trigger"
                 onClick={(e) => {
                   e.stopPropagation()
                   toggleDropdown('management')
@@ -291,6 +302,7 @@ const MainNavigation = () => {
                         className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                           isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                         }`}
+                        onClick={closeAllDropdowns}
                       >
                         <IconComponent className="h-4 w-4 text-gray-600" />
                         <div className="flex-1">
@@ -335,7 +347,7 @@ const MainNavigation = () => {
           <div className="lg:hidden border-t bg-white/95 backdrop-blur-md mobile-menu-enter">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {/* Home */}
-              <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href="/" onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                 <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium ${
                   isActiveRoute('/') && pathname === '/'
                     ? 'bg-blue-100 text-blue-700'
@@ -354,7 +366,7 @@ const MainNavigation = () => {
                 {navigationRoutes.portals.map((route) => {
                   const IconComponent = route.icon
                   return (
-                    <Link key={route.href} href={route.href} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                       <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                         isActiveRoute(route.href)
                           ? 'bg-blue-100 text-blue-700'
@@ -381,7 +393,7 @@ const MainNavigation = () => {
                 {navigationRoutes.services.map((route) => {
                   const IconComponent = route.icon
                   return (
-                    <Link key={route.href} href={route.href} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                       <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                         isActiveRoute(route.href)
                           ? 'bg-blue-100 text-blue-700'
@@ -403,7 +415,7 @@ const MainNavigation = () => {
                 {navigationRoutes.auth.map((route) => {
                   const IconComponent = route.icon
                   return (
-                    <Link key={route.href} href={route.href} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                       <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                         isActiveRoute(route.href)
                           ? 'bg-blue-100 text-blue-700'
