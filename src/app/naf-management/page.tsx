@@ -29,6 +29,7 @@ import {
   Search
 } from 'lucide-react'
 import Link from 'next/link'
+import NotificationCenter from '@/components/notifications/NotificationCenter'
 
 interface AppointmentData {
   id: string
@@ -193,6 +194,8 @@ export default function NAFManagementPage() {
             </div>
 
             <div className="flex items-center space-x-4">
+              <NotificationCenter userId="naf-admin-1" userType="user" />
+
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair

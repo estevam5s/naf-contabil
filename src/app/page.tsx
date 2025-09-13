@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar, BookOpen, BarChart3, UserCheck, Zap, Facebook, Instagram, Linkedin } from 'lucide-react'
 import NAFServicesShowcase from "@/components/NAFServicesShowcase"
+import NotificationCenter from '@/components/notifications/NotificationCenter'
 
 export default function Home() {
   const services = [
@@ -82,7 +83,9 @@ export default function Home() {
                 <p className="text-sm text-gray-600">Núcleo de Apoio Contábil e Fiscal</p>
               </div>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex items-center space-x-3">
+              <NotificationCenter userId="guest-user" userType="user" />
+
               <Link href="/login">
                 <Button variant="outline" size="sm">Entrar</Button>
               </Link>

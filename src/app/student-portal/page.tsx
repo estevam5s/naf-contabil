@@ -32,6 +32,7 @@ import {
   GraduationCap
 } from 'lucide-react'
 import Link from 'next/link'
+import NotificationCenter from '@/components/notifications/NotificationCenter'
 
 interface StudentProfile {
   id: string
@@ -267,6 +268,8 @@ export default function StudentPortal() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <NotificationCenter userId={dashboardData.profile.id} userType="student" />
+
               <Badge className={`${dashboardData.profile.status === 'ATIVO' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                 {dashboardData.profile.status}
               </Badge>

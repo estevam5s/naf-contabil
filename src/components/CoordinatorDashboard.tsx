@@ -5,11 +5,12 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Users, FileText, CheckCircle, Clock, TrendingUp, TrendingDown, 
+import {
+  Users, FileText, CheckCircle, Clock, TrendingUp, TrendingDown,
   Calendar, Award, AlertTriangle, Download, Filter, RefreshCw,
   BarChart3, PieChart, Activity, Star, Target
 } from 'lucide-react'
+import NotificationCenter from '@/components/notifications/NotificationCenter'
 import { Line, Bar, Doughnut, Radar } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -228,7 +229,9 @@ export default function CoordinatorDashboard() {
           <p className="text-gray-600">Visão completa do NAF Contábil</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <NotificationCenter userId="coordinator-1" userType="coordinator" />
+
           <select
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
@@ -239,7 +242,7 @@ export default function CoordinatorDashboard() {
             <option value="90">Últimos 3 meses</option>
             <option value="365">Último ano</option>
           </select>
-          
+
           <Button
             onClick={refreshData}
             disabled={refreshing}
@@ -249,7 +252,7 @@ export default function CoordinatorDashboard() {
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
-          
+
           <Button
             onClick={() => exportReport('dashboard')}
             variant="outline"
