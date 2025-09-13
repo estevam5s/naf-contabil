@@ -3,18 +3,75 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calculator, FileText, Users, Phone, Shield, TrendingUp, Building, Globe, BookOpen, CreditCard } from 'lucide-react'
+import {
+  Calculator,
+  FileText,
+  Users,
+  Building2,
+  BookOpen,
+  Shield,
+  UserCheck,
+  BarChart3,
+  Clock,
+  TrendingUp,
+  Heart
+} from 'lucide-react'
 
-interface Service {
+interface NAFService {
   id: string
   name: string
+  slug: string
   description: string
+  detailed_description?: string
   category: string
-  isActive: boolean
+  subcategory?: string
+  difficulty: 'basico' | 'intermediario' | 'avancado'
+  status: 'ativo' | 'inativo' | 'em_desenvolvimento'
+  is_featured: boolean
+  is_popular: boolean
+  priority_order: number
+  estimated_duration_minutes?: number
+  required_documents?: string[]
+  prerequisites?: string[]
+  icon_name?: string
+  color_scheme?: string
+  process_steps?: any
+  views_count: number
+  requests_count: number
+  satisfaction_rating: number
+  created_at: string
+  updated_at: string
+}
+
+const iconMap: { [key: string]: any } = {
+  Calculator,
+  FileText,
+  Users,
+  Building2,
+  BookOpen,
+  Shield,
+  UserCheck,
+  BarChart3,
+  Clock,
+  TrendingUp,
+  Heart
+}
+
+const categoryLabels = {
+  'servicos_disponíveis': 'Serviços Disponíveis',
+  'servicos_tributarios': 'Serviços Tributários',
+  'servicos_empresariais': 'Serviços Empresariais',
+  'documentacao': 'Documentação'
+}
+
+const difficultyLabels = {
+  'basico': 'Básico',
+  'intermediario': 'Intermediário',
+  'avancado': 'Avançado'
 }
 
 export default function NAFServicesShowcase() {
-  const [services, setServices] = useState<Service[]>([])
+  const [services, setServices] = useState<NAFService[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -23,12 +80,12 @@ export default function NAFServicesShowcase() {
 
   const loadFeaturedServices = async () => {
     try {
-      const response = await fetch('/api/services')
+      const response = await fetch('/api/naf-services?featured=true&limit=6')
       if (response.ok) {
-        const allServices = await response.json()
-        // Pegar apenas 6 serviços principais para showcase
-        const featuredServices = allServices.slice(0, 6)
-        setServices(featuredServices)
+        const data = await response.json()
+        setServices(data.services || [])
+      } else {
+        console.error('Erro ao carregar serviços:', response.statusText)
       }
     } catch (error) {
       console.error('Erro ao carregar serviços:', error)
@@ -37,32 +94,27 @@ export default function NAFServicesShowcase() {
     }
   }
 
-  const getServiceIcon = (category: string) => {
-    switch (category) {
-      case 'IMPOSTO_RENDA': return Calculator
-      case 'CADASTROS_DOCUMENTOS': return FileText
-      case 'ESOCIAL_TRABALHISTA': return Users
-      case 'MEI_EMPRESAS': return Building
-      case 'CERTIDOES_CONSULTAS': return Shield
-      case 'PAGAMENTOS_PARCELAMENTOS': return CreditCard
-      case 'COMERCIO_EXTERIOR': return Globe
-      case 'ACESSO_DIGITAL': return Phone
-      default: return BookOpen
+  const getIconComponent = (iconName?: string) => {
+    if (!iconName || !iconMap[iconName]) {
+      return FileText
     }
+    return iconMap[iconName]
   }
 
-  const getServiceColor = (category: string) => {
-    switch (category) {
-      case 'IMPOSTO_RENDA': return 'bg-blue-100 text-blue-600'
-      case 'CADASTROS_DOCUMENTOS': return 'bg-green-100 text-green-600'
-      case 'ESOCIAL_TRABALHISTA': return 'bg-purple-100 text-purple-600'
-      case 'MEI_EMPRESAS': return 'bg-orange-100 text-orange-600'
-      case 'CERTIDOES_CONSULTAS': return 'bg-red-100 text-red-600'
-      case 'PAGAMENTOS_PARCELAMENTOS': return 'bg-indigo-100 text-indigo-600'
-      case 'COMERCIO_EXTERIOR': return 'bg-cyan-100 text-cyan-600'
-      case 'ACESSO_DIGITAL': return 'bg-pink-100 text-pink-600'
-      default: return 'bg-gray-100 text-gray-600'
+  const getColorClass = (colorScheme?: string) => {
+    const colorMap: { [key: string]: string } = {
+      blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
+      green: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
+      purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
+      orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400',
+      red: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
+      indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400',
+      yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400',
+      teal: 'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400',
+      emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400',
+      pink: 'bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400'
     }
+    return colorMap[colorScheme || 'blue'] || colorMap.blue
   }
 
   if (loading) {
@@ -87,24 +139,46 @@ export default function NAFServicesShowcase() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {services.map((service) => {
-        const IconComponent = getServiceIcon(service.category)
-        const colorClass = getServiceColor(service.category)
-        
+        const IconComponent = getIconComponent(service.icon_name)
+
         return (
-          <Card key={service.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
+          <Card key={service.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+            <CardHeader className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className={`w-12 h-12 rounded-lg ${colorClass} flex items-center justify-center`}>
+                <div className={`w-12 h-12 rounded-lg ${getColorClass(service.color_scheme)} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                   <IconComponent className="h-6 w-6" />
                 </div>
-                {service.isActive && (
-                  <Badge variant="secondary" className="text-xs">
-                    Disponível
-                  </Badge>
+                <div className="flex flex-col items-end gap-1">
+                  {service.status === 'ativo' && (
+                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400">
+                      Disponível
+                    </Badge>
+                  )}
+                  {service.is_popular && (
+                    <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600">
+                      Popular
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <CardTitle className="text-lg dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {service.name}
+              </CardTitle>
+              <CardDescription className="line-clamp-2 dark:text-gray-300">
+                {service.description}
+              </CardDescription>
+
+              <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-gray-400">
+                <span className="capitalize">
+                  {difficultyLabels[service.difficulty]}
+                </span>
+                {service.estimated_duration_minutes && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{service.estimated_duration_minutes}min</span>
+                  </div>
                 )}
               </div>
-              <CardTitle className="text-lg">{service.name}</CardTitle>
-              <CardDescription className="line-clamp-2">{service.description}</CardDescription>
             </CardHeader>
           </Card>
         )

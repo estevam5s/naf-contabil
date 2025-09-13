@@ -1,326 +1,590 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+import { Badge } from "@/components/ui/badge"
 import MainNavigation from '@/components/MainNavigation'
+import {
+  Calculator,
+  FileText,
+  Users,
+  Search,
+  Filter,
+  Clock,
+  Star,
+  TrendingUp,
+  Building2,
+  BookOpen,
+  Shield,
+  UserCheck,
+  BarChart3,
+  Heart,
+  ArrowRight,
+  CheckCircle,
+  AlertCircle,
+  Calendar,
+  Eye,
+  Bookmark,
+  Grid,
+  List
+} from 'lucide-react'
 
-interface Service {
+interface NAFService {
   id: string
   name: string
+  slug: string
   description: string
+  detailed_description?: string
   category: string
-  requirements?: string
-  estimatedDuration?: number
-  isActive: boolean
+  subcategory?: string
+  difficulty: 'basico' | 'intermediario' | 'avancado'
+  status: 'ativo' | 'inativo' | 'em_desenvolvimento'
+  is_featured: boolean
+  is_popular: boolean
+  priority_order: number
+  estimated_duration_minutes?: number
+  required_documents?: string[]
+  prerequisites?: string[]
+  icon_name?: string
+  color_scheme?: string
+  process_steps?: any
+  views_count: number
+  requests_count: number
+  satisfaction_rating: number
+  created_at: string
+  updated_at: string
+}
+
+const iconMap: { [key: string]: any } = {
+  Calculator,
+  FileText,
+  Users,
+  Building2,
+  BookOpen,
+  Shield,
+  UserCheck,
+  BarChart3,
+  Clock,
+  TrendingUp,
+  Heart
+}
+
+const categoryLabels = {
+  'servicos_disponíveis': 'Serviços Disponíveis',
+  'servicos_tributarios': 'Serviços Tributários',
+  'servicos_empresariais': 'Serviços Empresariais',
+  'documentacao': 'Documentação'
+}
+
+const difficultyLabels = {
+  'basico': 'Básico',
+  'intermediario': 'Intermediário',
+  'avancado': 'Avançado'
+}
+
+const difficultyColors = {
+  'basico': 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400',
+  'intermediario': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400',
+  'avancado': 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
 }
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([])
+  const [services, setServices] = useState<NAFService[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<string>('priority')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false)
 
   useEffect(() => {
-    loadServices()
-  }, [])
+    fetchServices()
+  }, [selectedCategory, selectedDifficulty, sortBy])
 
-  const loadServices = async () => {
+  const fetchServices = async () => {
     try {
-      const response = await fetch('/api/services')
+      setLoading(true)
+      let url = '/api/naf-services?status=ativo'
+
+      if (selectedCategory !== 'all') {
+        url += `&category=${selectedCategory}`
+      }
+      if (showFeaturedOnly) {
+        url += '&featured=true'
+      }
+
+      const response = await fetch(url)
+      const data = await response.json()
+
       if (response.ok) {
-        const data = await response.json()
-        setServices(data)
+        let servicesData = data.services || []
+
+        // Filtro de dificuldade
+        if (selectedDifficulty !== 'all') {
+          servicesData = servicesData.filter((s: NAFService) => s.difficulty === selectedDifficulty)
+        }
+
+        // Ordenação
+        switch (sortBy) {
+          case 'name':
+            servicesData.sort((a: NAFService, b: NAFService) => a.name.localeCompare(b.name))
+            break
+          case 'popular':
+            servicesData.sort((a: NAFService, b: NAFService) => b.views_count - a.views_count)
+            break
+          case 'rating':
+            servicesData.sort((a: NAFService, b: NAFService) => b.satisfaction_rating - a.satisfaction_rating)
+            break
+          default: // priority
+            servicesData.sort((a: NAFService, b: NAFService) => a.priority_order - b.priority_order)
+        }
+
+        setServices(servicesData)
+      } else {
+        console.error('Erro ao buscar serviços:', data.error)
       }
     } catch (error) {
-      console.error('Erro ao carregar serviços:', error)
+      console.error('Erro ao buscar serviços:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Carregando serviços...</p>
-        </div>
-      </div>
-    )
+  const filteredServices = services.filter(service =>
+    service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (service.subcategory?.toLowerCase().includes(searchTerm.toLowerCase()))
+  )
+
+  const getIconComponent = (iconName?: string) => {
+    if (!iconName || !iconMap[iconName]) {
+      return FileText
+    }
+    return iconMap[iconName]
   }
 
-  const getCategoryInfo = (cat: string) => {
-    switch (cat) {
-      case 'CADASTROS_DOCUMENTOS': 
-        return { name: '� Cadastros e Documentos', color: 'border-l-blue-500', icon: '📋' }
-      case 'IMPOSTO_RENDA': 
-        return { name: '💰 Imposto de Renda', color: 'border-l-green-500', icon: '💰' }
-      case 'MEI_EMPRESAS': 
-        return { name: '🏢 MEI e Empresas', color: 'border-l-purple-500', icon: '🏢' }
-      case 'ESOCIAL_TRABALHISTA': 
-        return { name: '👥 E-Social e Trabalhista', color: 'border-l-orange-500', icon: '👥' }
-      case 'CERTIDOES_CONSULTAS': 
-        return { name: '📜 Certidões e Consultas', color: 'border-l-yellow-500', icon: '📜' }
-      case 'PAGAMENTOS_PARCELAMENTOS': 
-        return { name: '� Pagamentos e Parcelamentos', color: 'border-l-red-500', icon: '💳' }
-      case 'COMERCIO_EXTERIOR': 
-        return { name: '🌍 Comércio Exterior', color: 'border-l-cyan-500', icon: '🌍' }
-      case 'ISENCOES_ESPECIAIS': 
-        return { name: '⭐ Isenções Especiais', color: 'border-l-pink-500', icon: '⭐' }
-      case 'RURAL_ITR': 
-        return { name: '🌾 Área Rural e ITR', color: 'border-l-emerald-500', icon: '🌾' }
-      case 'ACESSO_DIGITAL': 
-        return { name: '🔐 Acesso Digital', color: 'border-l-indigo-500', icon: '�' }
-      case 'PREVIDENCIA_TRABALHISTA': 
-        return { name: '⚖️ Previdência e Trabalhista', color: 'border-l-slate-500', icon: '⚖️' }
-      case 'REGULARIZACAO_FISCAL': 
-        return { name: '� Regularização Fiscal', color: 'border-l-teal-500', icon: '🔧' }
-      case 'SIMPLES_MEI': 
-        return { name: '📊 Simples Nacional e MEI', color: 'border-l-violet-500', icon: '📊' }
-      case 'AREA_RURAL': 
-        return { name: '🚜 Área Rural', color: 'border-l-lime-500', icon: '🚜' }
-      case 'INTERNACIONAL': 
-        return { name: '🌎 Área Internacional', color: 'border-l-sky-500', icon: '🌎' }
-      case 'PESSOA_JURIDICA': 
-        return { name: '🏛️ Pessoa Jurídica', color: 'border-l-amber-500', icon: '🏛️' }
-      case 'PROCESSOS_ADMINISTRATIVOS': 
-        return { name: '⚖️ Processos Administrativos', color: 'border-l-rose-500', icon: '⚖️' }
-      case 'ATENDIMENTO_PRESENCIAL': 
-        return { name: '🏪 Atendimento Presencial', color: 'border-l-gray-500', icon: '🏪' }
-      default: 
-        return { name: cat, color: 'border-l-gray-500', icon: '📋' }
+  const getColorClass = (colorScheme?: string) => {
+    const colorMap: { [key: string]: string } = {
+      blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
+      green: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
+      purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
+      orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400',
+      red: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
+      indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400',
+      yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400',
+      teal: 'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400',
+      emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400',
+      pink: 'bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400'
     }
+    return colorMap[colorScheme || 'blue'] || colorMap.blue
   }
+
+  const groupedServices = Object.entries(categoryLabels).map(([category, label]) => ({
+    category,
+    label,
+    services: filteredServices.filter(service => service.category === category)
+  }))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      {/* Main Navigation */}
+    <div className="min-h-screen bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <MainNavigation />
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container mx-auto px-4 py-8 mt-16">
+        {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Serviços NAF
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Nossos Serviços
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Conheça todos os serviços oferecidos pelo Núcleo de Apoio Contábil Fiscal.
-            Todos os atendimentos são gratuitos e realizados por estudantes supervisionados por professores.
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-6 max-w-3xl mx-auto">
+            O NAF Estácio Florianópolis oferece orientação fiscal e contábil gratuita com
+            qualidade profissional. Conheça todos os nossos serviços disponíveis.
           </p>
-        </div>
-
-        {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-blue-600">{services.length}</div>
-              <p className="text-sm text-gray-600">Serviços Disponíveis</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-green-600">
-                {services.filter(s => s.category === 'TRIBUTARIO').length}
-              </div>
-              <p className="text-sm text-gray-600">Serviços Tributários</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-purple-600">
-                {services.filter(s => s.category === 'EMPRESARIAL').length}
-              </div>
-              <p className="text-sm text-gray-600">Serviços Empresariais</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-yellow-600">
-                {services.filter(s => s.category === 'DOCUMENTOS').length}
-              </div>
-              <p className="text-sm text-gray-600">Documentação</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Banner dos Serviços NAF Oficiais */}
-        <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white border-0 mb-12">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">🏛️ Serviços NAF Oficiais</h2>
-                <p className="text-blue-100 mb-4">
-                  Conheça todos os 45+ serviços fiscais oficiais do NAF com procedimentos detalhados, 
-                  documentação necessária e orientações completas para pessoas físicas de baixa renda, MEI, OSC e pequenos proprietários rurais.
-                </p>
-                <Link href="/naf-services">
-                  <Button variant="secondary" size="lg" className="text-blue-800">
-                    Ver Catálogo Completo →
-                  </Button>
-                </Link>
-              </div>
-              <div className="hidden md:block">
-                <div className="text-6xl opacity-50">🏛️</div>
-              </div>
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>Atendimento Gratuito</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-blue-500" />
+              <span>Estudantes Qualificados</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-purple-500" />
+              <span>Supervisão Profissional</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Serviços por Categoria */}
-        {['TRIBUTARIO', 'EMPRESARIAL', 'DOCUMENTOS', 'TRABALHISTA'].map(category => {
-          const categoryServices = services.filter(s => s.category === category)
-          
-          if (categoryServices.length === 0) return null
-
-          const categoryInfo = getCategoryInfo(category)
-
-          return (
-            <section key={category} className="mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">
-                {categoryInfo.name}
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categoryServices.map((service) => (
-                  <Card key={service.id} className={`hover:shadow-lg transition-shadow border-l-4 ${categoryInfo.color}`}>
-                    <CardHeader>
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                        <span className="text-blue-600 text-xl">{categoryInfo.icon}</span>
-                      </div>
-                      <CardTitle className="text-lg">{service.name}</CardTitle>
-                      <CardDescription>{service.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {service.requirements && (
-                        <div className="mb-4 p-3 bg-gray-50 rounded">
-                          <p className="text-sm font-medium text-gray-700 mb-1">
-                            📋 Documentos necessários:
-                          </p>
-                          <p className="text-sm text-gray-600">{service.requirements}</p>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">
-                            ⏱️ {service.estimatedDuration || 30} min
-                          </span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            service.isActive 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {service.isActive ? '✅ Disponível' : '❌ Indisponível'}
-                          </span>
-                        </div>
-                        
-                        {service.isActive && (
-                          <Link href="/login">
-                            <Button size="sm">
-                              Solicitar
-                            </Button>
-                          </Link>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+        {/* Stats Section */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                {services.length}
               </div>
-            </section>
-          )
-        })}
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                Serviços Disponíveis
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                {services.reduce((acc, s) => acc + s.views_count, 0).toLocaleString()}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                Visualizações
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                {services.reduce((acc, s) => acc + s.requests_count, 0).toLocaleString()}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                Solicitações
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">
+                {services.length > 0 ? (services.reduce((acc, s) => acc + s.satisfaction_rating, 0) / services.length).toFixed(1) : '0.0'}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                Satisfação Média
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {services.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Nenhum serviço encontrado. Entre em contato conosco para mais informações.</p>
+        {/* Filters and Controls */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar serviços..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md
+                         bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="all">Todas as categorias</option>
+              {Object.entries(categoryLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="all">Todas as dificuldades</option>
+              {Object.entries(difficultyLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="priority">Relevância</option>
+              <option value="name">Nome A-Z</option>
+              <option value="popular">Mais Populares</option>
+              <option value="rating">Melhor Avaliados</option>
+            </select>
+
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  checked={showFeaturedOnly}
+                  onChange={(e) => setShowFeaturedOnly(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="featured" className="text-sm text-gray-600 dark:text-gray-400">
+                  Apenas em destaque
+                </label>
+              </div>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {filteredServices.length} serviços encontrados
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Services Content */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                  <div className="flex gap-2">
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {groupedServices
+              .filter(group => group.services.length > 0)
+              .map((group) => (
+                <section key={group.category}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {group.label}
+                    </h2>
+                    <Badge variant="outline" className="px-3 py-1">
+                      {group.services.length} serviços
+                    </Badge>
+                  </div>
+
+                  <div className={viewMode === 'grid'
+                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    : "space-y-4"
+                  }>
+                    {group.services.map((service) => {
+                      const IconComponent = getIconComponent(service.icon_name)
+
+                      if (viewMode === 'list') {
+                        return (
+                          <Card key={service.id} className="hover:shadow-lg transition-all duration-300">
+                            <CardContent className="p-6">
+                              <div className="flex items-start gap-4">
+                                <div className={`p-3 rounded-lg ${getColorClass(service.color_scheme)}`}>
+                                  <IconComponent className="h-6 w-6" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                                        {service.name}
+                                        {service.is_featured && <Star className="inline h-4 w-4 text-yellow-500 ml-2" />}
+                                      </h3>
+                                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
+                                        {service.description}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex gap-2">
+                                      <Badge className={difficultyColors[service.difficulty]}>
+                                        {difficultyLabels[service.difficulty]}
+                                      </Badge>
+                                      {service.is_popular && (
+                                        <Badge variant="secondary">
+                                          <TrendingUp className="h-3 w-3 mr-1" />
+                                          Popular
+                                        </Badge>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                      <div className="flex items-center gap-1">
+                                        <Eye className="h-3 w-3" />
+                                        <span>{service.views_count}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Star className="h-3 w-3" />
+                                        <span>{service.satisfaction_rating.toFixed(1)}</span>
+                                      </div>
+                                      {service.estimated_duration_minutes && (
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-3 w-3" />
+                                          <span>{service.estimated_duration_minutes}min</span>
+                                        </div>
+                                      )}
+                                      <Link href={`/naf-scheduling`}>
+                                        <Button size="sm">
+                                          <Calendar className="h-3 w-3 mr-1" />
+                                          Agendar
+                                        </Button>
+                                      </Link>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      }
+
+                      return (
+                        <Card key={service.id} className="group hover:shadow-lg transition-all duration-300">
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${getColorClass(service.color_scheme)}`}>
+                                  <IconComponent className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <CardTitle className="text-lg dark:text-white">
+                                    {service.name}
+                                    {service.is_featured && <Star className="inline h-4 w-4 text-yellow-500 ml-2" />}
+                                  </CardTitle>
+                                  <CardDescription className="dark:text-gray-400">
+                                    {service.subcategory || group.label}
+                                  </CardDescription>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+
+                          <CardContent>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                              {service.description}
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              <Badge className={difficultyColors[service.difficulty]}>
+                                {difficultyLabels[service.difficulty]}
+                              </Badge>
+                              {service.is_popular && (
+                                <Badge variant="secondary">
+                                  <TrendingUp className="h-3 w-3 mr-1" />
+                                  Popular
+                                </Badge>
+                              )}
+                              {service.estimated_duration_minutes && (
+                                <Badge variant="outline">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {service.estimated_duration_minutes}min
+                                </Badge>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                              <div className="text-center">
+                                <Eye className="h-4 w-4 mx-auto mb-1" />
+                                <span>{service.views_count}</span>
+                              </div>
+                              <div className="text-center">
+                                <Users className="h-4 w-4 mx-auto mb-1" />
+                                <span>{service.requests_count}</span>
+                              </div>
+                              <div className="text-center">
+                                <Star className="h-4 w-4 mx-auto mb-1" />
+                                <span>{service.satisfaction_rating.toFixed(1)}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Link href={`/services/${service.slug}`} className="flex-1">
+                                <Button variant="outline" size="sm" className="w-full">
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Detalhes
+                                </Button>
+                              </Link>
+                              <Link href="/naf-scheduling">
+                                <Button size="sm">
+                                  <Calendar className="h-4 w-4 mr-1" />
+                                  Agendar
+                                </Button>
+                              </Link>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
           </div>
         )}
 
-        {/* Informações sobre o processo */}
-        <section className="mt-16">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-center">Como funciona o atendimento?</CardTitle>
-              <CardDescription className="text-center">
-                Entenda o processo completo de atendimento no NAF
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-blue-600 font-bold">1</span>
-                  </div>
-                  <h3 className="font-medium mb-2">Solicite o Serviço</h3>
-                  <p className="text-sm text-gray-600">
-                    Escolha o serviço e preencha sua solicitação com os detalhes necessários
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-green-600 font-bold">2</span>
-                  </div>
-                  <h3 className="font-medium mb-2">Agende o Atendimento</h3>
-                  <p className="text-sm text-gray-600">
-                    Receba seu protocolo e agende o atendimento presencial ou online
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-yellow-600 font-bold">3</span>
-                  </div>
-                  <h3 className="font-medium mb-2">Receba Orientação</h3>
-                  <p className="text-sm text-gray-600">
-                    Nossos estudantes e professores irão orientá-lo em todo o processo
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-purple-600 font-bold">4</span>
-                  </div>
-                  <h3 className="font-medium mb-2">Acompanhe o Progresso</h3>
-                  <p className="text-sm text-gray-600">
-                    Acompanhe o status da sua solicitação até a conclusão completa
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+        {!loading && filteredServices.length === 0 && (
+          <div className="text-center py-12">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Nenhum serviço encontrado
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Tente ajustar os filtros de busca ou navegar pelas categorias.
+            </p>
+            <Button onClick={() => {
+              setSearchTerm('')
+              setSelectedCategory('all')
+              setSelectedDifficulty('all')
+              setShowFeaturedOnly(false)
+            }}>
+              Limpar filtros
+            </Button>
+          </div>
+        )}
 
-        {/* Call to Action */}
-        <section className="text-center mt-12">
-          <Card className="bg-blue-50">
-            <CardContent className="pt-8 pb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Precisa de ajuda com questões fiscais e contábeis?
-              </h2>
-              <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                Nosso NAF oferece atendimento gratuito para pessoas físicas e microempresas.
-                Faça seu agendamento e receba orientação especializada.
-              </p>
-              <div className="flex justify-center space-x-4">
-                <Link href="/login">
-                  <Button size="lg">
-                    Solicitar Atendimento
-                  </Button>
-                </Link>
-                <Link href="/schedule">
-                  <Button size="lg" variant="outline">
-                    Agendar Visita
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-      </main>
+        {/* CTA Section */}
+        <div className="mt-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-center text-white">
+          <h2 className="text-2xl font-bold mb-4">
+            Precisa de um serviço específico?
+          </h2>
+          <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+            Entre em contato conosco para orientações personalizadas sobre questões fiscais e contábeis.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/naf-scheduling">
+              <Button size="lg" variant="secondary">
+                <Calendar className="h-5 w-5 mr-2" />
+                Agendar Atendimento
+              </Button>
+            </Link>
+            <Link href="tel:(48)98461-4449">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                <span className="mr-2">📞</span>
+                (48) 98461-4449
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
