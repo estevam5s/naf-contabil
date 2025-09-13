@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar, BookOpen, BarChart3, UserCheck, Zap, Facebook, Instagram, Linkedin } from 'lucide-react'
 import NAFServicesShowcase from "@/components/NAFServicesShowcase"
-import NotificationCenter from '@/components/notifications/NotificationCenter'
+import MainNavigation from '@/components/MainNavigation'
 
 export default function Home() {
   const services = [
@@ -68,34 +68,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      
-
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-600 text-white p-2 rounded-lg">
-                <Calculator className="h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">NAF Contábil</h1>
-                <p className="text-sm text-gray-600">Núcleo de Apoio Contábil e Fiscal</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <NotificationCenter userId="guest-user" userType="user" />
-
-              <Link href="/login">
-                <Button variant="outline" size="sm">Entrar</Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button>Acessar Dashboard</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Main Navigation */}
+      <MainNavigation />
 
       {/* Hero Section */}
       <section className="py-20">

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import MainNavigation from '@/components/MainNavigation'
 
 interface Service {
   id: string
@@ -93,31 +94,8 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <Link href="/" className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">NAF</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Núcleo de Apoio Contábil Fiscal
-                </h1>
-              </div>
-            </Link>
-            <div className="flex space-x-4">
-              <Link href="/login">
-                <Button variant="outline">Entrar</Button>
-              </Link>
-              <Link href="/schedule">
-                <Button>Agendar</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Main Navigation */}
+      <MainNavigation />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

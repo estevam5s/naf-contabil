@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import navigation-specific styles */
+@import '../styles/navigation.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;

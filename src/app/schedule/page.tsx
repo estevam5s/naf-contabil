@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import MainNavigation from '@/components/MainNavigation'
 import { Calendar, Clock, User, Mail, Phone, FileText, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface ServiceTemplate {
@@ -300,31 +301,8 @@ export default function SchedulePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <Link href="/" className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">NAF</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Núcleo de Apoio Contábil Fiscal
-                </h1>
-              </div>
-            </Link>
-            <div className="flex space-x-4">
-              <Link href="/login">
-                <Button variant="outline">Entrar</Button>
-              </Link>
-              <Link href="/services">
-                <Button variant="outline">Serviços</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Main Navigation */}
+      <MainNavigation />
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
