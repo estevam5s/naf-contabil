@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const MainNavigation = () => {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -159,8 +160,8 @@ const MainNavigation = () => {
     <nav
       className={`w-full nav-transition z-50 ${
         isScrolled
-          ? 'fixed top-0 bg-white/95 nav-backdrop shadow-lg border-b'
-          : 'bg-white/80 backdrop-blur-sm border-b'
+          ? 'fixed top-0 bg-white/95 dark:bg-slate-900/95 nav-backdrop shadow-lg border-b dark:border-slate-800'
+          : 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b dark:border-slate-800'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -171,8 +172,8 @@ const MainNavigation = () => {
               <Calculator className="h-6 w-6" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-gray-900">NAF Estácio Florianópolis</h1>
-              <p className="text-xs text-gray-600">Núcleo de Apoio Fiscal</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">NAF Estácio Florianópolis</h1>
+              <p className="text-xs text-gray-600 dark:text-gray-300">Núcleo de Apoio Fiscal</p>
             </div>
           </Link>
 
@@ -207,15 +208,15 @@ const MainNavigation = () => {
               </Button>
 
               {dropdowns.portals && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-2 z-50 nav-dropdown">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border dark:border-slate-700 py-2 z-50 nav-dropdown">
                   {navigationRoutes.portals.map((route) => {
                     const IconComponent = route.icon
                     return (
                       <Link
                         key={route.href}
                         href={route.href}
-                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                          isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors ${
+                          isActiveRoute(route.href) ? 'bg-blue-50 dark:bg-blue-900/50 border-r-2 border-blue-500 dark:border-blue-400' : ''
                         }`}
                         onClick={closeAllDropdowns}
                       >
@@ -251,15 +252,15 @@ const MainNavigation = () => {
               </Button>
 
               {dropdowns.services && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-2 z-50 nav-dropdown">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border dark:border-slate-700 py-2 z-50 nav-dropdown">
                   {navigationRoutes.services.map((route) => {
                     const IconComponent = route.icon
                     return (
                       <Link
                         key={route.href}
                         href={route.href}
-                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                          isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors ${
+                          isActiveRoute(route.href) ? 'bg-blue-50 dark:bg-blue-900/50 border-r-2 border-blue-500 dark:border-blue-400' : ''
                         }`}
                         onClick={closeAllDropdowns}
                       >
@@ -299,8 +300,8 @@ const MainNavigation = () => {
                       <Link
                         key={route.href}
                         href={route.href}
-                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                          isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors ${
+                          isActiveRoute(route.href) ? 'bg-blue-50 dark:bg-blue-900/50 border-r-2 border-blue-500 dark:border-blue-400' : ''
                         }`}
                         onClick={closeAllDropdowns}
                       >
@@ -319,6 +320,9 @@ const MainNavigation = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Notification Center */}
             <NotificationCenter userId="guest-user" userType="user" />
 
@@ -344,14 +348,14 @@ const MainNavigation = () => {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t bg-white/95 backdrop-blur-md mobile-menu-enter">
+          <div className="lg:hidden border-t dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md mobile-menu-enter">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {/* Home */}
               <Link href="/" onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                 <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium ${
                   isActiveRoute('/') && pathname === '/'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
                 }`}>
                   <Home className="h-4 w-4" />
                   Início
@@ -360,7 +364,7 @@ const MainNavigation = () => {
 
               {/* Portais */}
               <div className="space-y-1">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Portais
                 </div>
                 {navigationRoutes.portals.map((route) => {
@@ -369,8 +373,8 @@ const MainNavigation = () => {
                     <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                       <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                         isActiveRoute(route.href)
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
                       }`}>
                         <IconComponent className="h-4 w-4" />
                         {route.label}
@@ -387,7 +391,7 @@ const MainNavigation = () => {
 
               {/* Serviços */}
               <div className="space-y-1">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Serviços
                 </div>
                 {navigationRoutes.services.map((route) => {
@@ -396,8 +400,8 @@ const MainNavigation = () => {
                     <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                       <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                         isActiveRoute(route.href)
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
                       }`}>
                         <IconComponent className="h-4 w-4" />
                         {route.label}
@@ -409,7 +413,7 @@ const MainNavigation = () => {
 
               {/* Acesso */}
               <div className="space-y-1">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acesso
                 </div>
                 {navigationRoutes.auth.map((route) => {
@@ -418,8 +422,8 @@ const MainNavigation = () => {
                     <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
                       <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                         isActiveRoute(route.href)
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
                       }`}>
                         <IconComponent className="h-4 w-4" />
                         {route.label}
