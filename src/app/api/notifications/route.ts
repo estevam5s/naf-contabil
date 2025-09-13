@@ -1,159 +1,145 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { createClient } from '@supabase/supabase-js'
 
-interface Notification {
-  id: string
-  type: 'success' | 'error' | 'warning' | 'info'
-  title: string
-  message: string
-  timestamp: Date
-  read: boolean
-  action?: {
-    label: string
-    url: string
-  }
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-
-export const dynamic = 'force-dynamic'
+// GET - Buscar notificações do usuário
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession()
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
+    const userType = searchParams.get('userType')
+    const status = searchParams.get('status') // unread, read, all
+    const limit = parseInt(searchParams.get('limit') || '20')
+    const offset = parseInt(searchParams.get('offset') || '0')
+
+    if (!userId || !userType) {
+      return NextResponse.json({
+        error: 'userId e userType são obrigatórios'
+      }, { status: 400 })
     }
 
-    // Buscar dados para gerar notificações dinâmicas
-    const [
-      demandasPendentes,
-      atendimentosAgendados,
-      novosUsuarios,
-      servicosAtivos
-    ] = await Promise.all([
-      prisma.demand.count({ where: { status: 'PENDING' } }),
-      prisma.attendance.count({ 
-        where: { 
-          status: 'SCHEDULED',
-          scheduledAt: {
-            gte: new Date(),
-            lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // próximos 7 dias
-          }
-        } 
-      }),
-      prisma.user.count({ 
-        where: { 
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // últimas 24h
-          }
-        } 
-      }),
-      prisma.service.count()
-    ])
+    let query = supabase
+      .from('notifications')
+      .select('*')
+      .eq('recipient_id', userId)
+      .eq('recipient_type', userType)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
-    const notifications: Notification[] = []
-
-    // Gerar notificações baseadas nos dados
-    if (demandasPendentes > 0) {
-      notifications.push({
-        id: `demandas-${Date.now()}`,
-        type: 'warning',
-        title: 'Demandas pendentes',
-        message: `${demandasPendentes} demanda${demandasPendentes > 1 ? 's' : ''} aguardando atendimento`,
-        timestamp: new Date(),
-        read: false,
-        action: {
-          label: 'Ver demandas',
-          url: '/demands'
-        }
-      })
+    // Filtrar por status se especificado
+    if (status && status !== 'all') {
+      query = query.eq('status', status)
     }
 
-    if (atendimentosAgendados > 0) {
-      notifications.push({
-        id: `agendamentos-${Date.now()}`,
-        type: 'info',
-        title: 'Atendimentos agendados',
-        message: `${atendimentosAgendados} atendimento${atendimentosAgendados > 1 ? 's' : ''} agendado${atendimentosAgendados > 1 ? 's' : ''} para esta semana`,
-        timestamp: new Date(),
-        read: false,
-        action: {
-          label: 'Ver agenda',
-          url: '/schedule'
-        }
-      })
+    // Filtrar notificações não expiradas
+    query = query.or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+
+    const { data: notifications, error } = await query
+
+    if (error) {
+      console.error('Error fetching notifications:', error)
+      return NextResponse.json({
+        error: 'Erro ao buscar notificações'
+      }, { status: 500 })
     }
 
-    if (novosUsuarios > 0) {
-      notifications.push({
-        id: `usuarios-${Date.now()}`,
-        type: 'success',
-        title: 'Novos cadastros',
-        message: `${novosUsuarios} novo${novosUsuarios > 1 ? 's' : ''} usuário${novosUsuarios > 1 ? 's' : ''} cadastrado${novosUsuarios > 1 ? 's' : ''} hoje`,
-        timestamp: new Date(),
-        read: false,
-        action: {
-          label: 'Ver usuários',
-          url: '/users'
-        }
-      })
-    }
+    // Buscar contagem total para paginação
+    const { count } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('recipient_id', userId)
+      .eq('recipient_type', userType)
+      .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
 
-    // Notificação de sistema funcionando
-    if (servicosAtivos > 0) {
-      notifications.push({
-        id: `sistema-${Date.now()}`,
-        type: 'success',
-        title: 'Sistema operacional',
-        message: `${servicosAtivos} serviços ativos e funcionando corretamente`,
-        timestamp: new Date(),
-        read: false
-      })
-    }
-
-    return NextResponse.json(notifications)
+    return NextResponse.json({
+      notifications: notifications || [],
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: (count || 0) > offset + limit
+      }
+    })
 
   } catch (error) {
-    console.error('Erro ao buscar notificações:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    console.error('Error in notifications GET:', error)
+    return NextResponse.json({
+      error: 'Erro interno do servidor'
+    }, { status: 500 })
   }
 }
 
+// POST - Criar nova notificação
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    const {
+      recipientId,
+      recipientType,
+      title,
+      message,
+      notificationType,
+      priority = 'medium',
+      icon,
+      color,
+      actionUrl,
+      actionLabel,
+      metadata = {},
+      sendEmail = false,
+      isPersistent = false,
+      expiresHours
+    } = await request.json()
+
+    if (!recipientId || !recipientType || !title || !message || !notificationType) {
+      return NextResponse.json({
+        error: 'Campos obrigatórios: recipientId, recipientType, title, message, notificationType'
+      }, { status: 400 })
     }
 
-    const { action, notificationId } = await request.json()
+    const expiresAt = expiresHours
+      ? new Date(Date.now() + expiresHours * 60 * 60 * 1000).toISOString()
+      : null
 
-    if (action === 'markAsRead') {
-      // Aqui você poderia salvar o estado da notificação no banco
-      // Por enquanto, apenas retornamos sucesso
-      return NextResponse.json({ success: true })
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert({
+        recipient_id: recipientId,
+        recipient_type: recipientType,
+        title,
+        message,
+        notification_type: notificationType,
+        priority,
+        icon,
+        color,
+        action_url: actionUrl,
+        action_label: actionLabel,
+        metadata,
+        send_email: sendEmail,
+        is_persistent: isPersistent,
+        expires_at: expiresAt
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating notification:', error)
+      return NextResponse.json({
+        error: 'Erro ao criar notificação'
+      }, { status: 500 })
     }
 
-    if (action === 'markAllAsRead') {
-      // Marcar todas as notificações como lidas
-      return NextResponse.json({ success: true })
-    }
-
-    return NextResponse.json(
-      { error: 'Ação não reconhecida' },
-      { status: 400 }
-    )
+    return NextResponse.json({
+      message: 'Notificação criada com sucesso',
+      notification: data
+    }, { status: 201 })
 
   } catch (error) {
-    console.error('Erro ao processar notificação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    console.error('Error in notifications POST:', error)
+    return NextResponse.json({
+      error: 'Erro interno do servidor'
+    }, { status: 500 })
   }
 }
