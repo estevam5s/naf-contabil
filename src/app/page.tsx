@@ -60,9 +60,9 @@ export default function Home() {
   ]
 
   const contactInfo = [
-    { icon: MapPin, label: "Endereço", value: "Campus Universitário - NAF" },
-    { icon: Phone, label: "Telefone", value: "(XX) XXXX-XXXX" },
-    { icon: Mail, label: "Email", value: "naf@instituicao.edu.br" },
+    { icon: MapPin, label: "Endereço", value: "Faculdade Estácio Florianópolis - NAF" },
+    { icon: Phone, label: "Telefone", value: "(48) 98461-4449" },
+    { icon: Mail, label: "Email", value: "naf@estacio.br" },
     { icon: Calendar, label: "Horário", value: "Seg-Sex: 8h às 17h" }
   ]
 
@@ -74,29 +74,49 @@ export default function Home() {
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Núcleo de Apoio Contábil e Fiscal
-            <span className="text-blue-600 block">Atendimento Gratuito</span>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            NAF Estácio Florianópolis
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Oferecemos orientação fiscal e contábil e gratuita para pessoas físicas, microempreendedores individuais, 
-            pequenos proprietários rurais e organizações da sociedade civil.
+          <h2 className="text-2xl md:text-3xl font-semibold text-blue-600 mb-6">
+            Núcleo de Apoio Contábil e Fiscal
+          </h2>
+          <p className="text-lg text-gray-600 mb-6 max-w-4xl mx-auto">
+            Faculdade Estácio Florianópolis oferece orientação fiscal e contábil gratuita para
+            pessoas físicas, microempreendedores individuais, pequenos proprietários
+            rurais e organizações da sociedade civil.
           </p>
+
+          {/* Contact Info */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
+            <div className="flex items-center justify-center gap-2">
+              <Phone className="h-5 w-5 text-amber-600" />
+              <span className="font-medium text-amber-800">Contato: (48) 98461-4449</span>
+            </div>
+            <p className="text-sm text-amber-700 mt-2">
+              Entre em contato pelo telefone <strong>(48) 98461-4449</strong> ou agende online.
+            </p>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/naf-scheduling">
-              <Button size="lg" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
                 Agendar Atendimento
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link href="/eligibility">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto border-blue-600 text-blue-600 hover:bg-blue-50">
                 Verificar Elegibilidade
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/fiscal-guides">
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Portal de Acesso
+                Perguntas Frequentes
+              </Button>
+            </Link>
+            <Link href="/services">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                Sobre o NAF Estácio
               </Button>
             </Link>
           </div>
@@ -300,10 +320,10 @@ export default function Home() {
                 <div className="bg-blue-600 p-2 rounded-lg">
                   <Calculator className="h-5 w-5" />
                 </div>
-                <span className="text-xl font-bold">NAF Contábil</span>
+                <span className="text-xl font-bold">NAF Estácio Florianópolis</span>
               </div>
               <p className="text-gray-400 text-sm">
-                Núcleo de Apoio Contábil e Fiscal - Sistema consolidado e eficiente para gestão e atendimento.
+                Núcleo de Apoio Contábil e Fiscal - Faculdade Estácio Florianópolis oferecendo orientação gratuita.
               </p>
               <div className="flex space-x-4 mt-6">
                 <Link href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -351,15 +371,15 @@ export default function Home() {
             <div>
               <h3 className="text-lg font-semibold mb-4">Contato</h3>
               <div className="space-y-2 text-gray-400 text-sm">
-                <p>Email: naf@instituicao.edu.br</p>
-                <p>Telefone: (11) 1234-5678</p>
-                <p>Endereço: Campus Universitário - NAF</p>
+                <p>Email: naf@estacio.br</p>
+                <p>Telefone: (48) 98461-4449</p>
+                <p>Endereço: Faculdade Estácio Florianópolis - NAF</p>
               </div>
             </div>
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            <p>&copy; 2025 NAF Contábil. Todos os direitos reservados.</p>
+            <p>&copy; 2025 NAF Estácio Florianópolis. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
