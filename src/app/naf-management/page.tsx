@@ -13,39 +13,22 @@ import {
   Calendar,
   TrendingUp,
   FileText,
-  Download,
   BarChart3,
   Activity,
   Clock,
   CheckCircle,
   AlertTriangle,
-  Star,
   Building2,
-  Scale,
-  ArrowLeft,
   LogOut,
-  Settings,
   Eye,
   Edit,
-  Filter,
-  Search,
-  Mail,
   Phone,
-  MapPin
+  Mail,
+  MapPin,
+  Filter,
+  Search
 } from 'lucide-react'
 import Link from 'next/link'
-
-interface FiscalService {
-  id: string
-  title: string
-  description: string
-  scope: 'FEDERAL' | 'ESTADUAL' | 'MUNICIPAL'
-  category: string
-  lastUpdated: string
-  steps: string[]
-  documents: string[]
-  serviceType: string
-}
 
 interface AppointmentData {
   id: string
@@ -68,261 +51,58 @@ interface AppointmentData {
 interface ServiceStats {
   service_type: string
   service_title: string
-  total: number
-  pending: number
-  confirmed: number
-  completed: number
-  urgent: number
-}
-
-interface DashboardData {
-  fiscalAppointments: {
-    totalAppointments: number
-    pendingAppointments: number
-    confirmedAppointments: number
-    completedAppointments: number
-    urgentAppointments: number
-    serviceBreakdown: Record<string, ServiceStats>
-    recentAppointments: AppointmentData[]
-  }
+  total_appointments: number
+  pending_count: number
+  confirmed_count: number
+  completed_count: number
+  cancelled_count: number
+  avg_urgency_score: number
+  recent_appointments: number
 }
 
 export default function NAFManagementPage() {
   const [loading, setLoading] = useState(true)
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
-  const [selectedService, setSelectedService] = useState<string>('all')
+  const [appointments, setAppointments] = useState<AppointmentData[]>([])
+  const [stats, setStats] = useState<ServiceStats[]>([])
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [error, setError] = useState('')
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
-  // Dados dos serviços fiscais (mesmo do fiscal-guides)
-  const fiscalServices: FiscalService[] = [
-    {
-      id: 'cpf-guide',
-      title: 'Cadastro de CPF - Guia Completo',
-      description: 'Procedimentos para inscrição, alteração e regularização de CPF',
-      scope: 'FEDERAL',
-      category: 'Cadastros',
-      lastUpdated: '2024-01-15',
-      serviceType: 'CPF',
-      steps: [
-        'Verificar se possui documentos necessários',
-        'Acessar o portal da Receita Federal',
-        'Preencher formulário online ou presencial',
-        'Aguardar processamento e emissão'
-      ],
-      documents: [
-        'Certidão de nascimento ou casamento',
-        'RG ou documento oficial com foto',
-        'Título de eleitor (se maior de 18 anos)',
-        'Comprovante de residência'
-      ]
-    },
-    {
-      id: 'mei-guide',
-      title: 'MEI - Formalização e Gestão',
-      description: 'Como abrir, gerir e cumprir obrigações do MEI',
-      scope: 'FEDERAL',
-      category: 'Microempreendedor',
-      lastUpdated: '2024-01-10',
-      serviceType: 'MEI',
-      steps: [
-        'Verificar atividades permitidas no MEI',
-        'Acessar Portal do Empreendedor',
-        'Preencher dados pessoais e da atividade',
-        'Obter CNPJ e licenças municipais',
-        'Emitir DAS mensalmente'
-      ],
-      documents: [
-        'CPF',
-        'RG',
-        'Comprovante de residência',
-        'Título de eleitor'
-      ]
-    },
-    {
-      id: 'ir-guide',
-      title: 'Declaração de Imposto de Renda PF',
-      description: 'Orientações para declaração anual do IR',
-      scope: 'FEDERAL',
-      category: 'Imposto de Renda',
-      lastUpdated: '2024-02-01',
-      serviceType: 'IR',
-      steps: [
-        'Verificar obrigatoriedade de declarar',
-        'Reunir documentos de rendimentos',
-        'Baixar programa IRPF da Receita',
-        'Preencher ficha por ficha',
-        'Transmitir declaração'
-      ],
-      documents: [
-        'Informes de rendimentos',
-        'Comprovantes de despesas médicas',
-        'Comprovantes de despesas educacionais',
-        'Documentos de dependentes'
-      ]
-    },
-    {
-      id: 'itr-guide',
-      title: 'ITR - Imposto Territorial Rural',
-      description: 'Declaração do ITR para propriedades rurais',
-      scope: 'FEDERAL',
-      category: 'Rural',
-      lastUpdated: '2024-01-20',
-      serviceType: 'ITR',
-      steps: [
-        'Verificar obrigatoriedade de declarar',
-        'Reunir documentos da propriedade',
-        'Calcular área total e aproveitável',
-        'Preencher DITR online',
-        'Transmitir e pagar se devido'
-      ],
-      documents: [
-        'Escritura do imóvel',
-        'CNIR (se houver)',
-        'Comprovantes de benfeitorias',
-        'Documento de área'
-      ]
-    },
-    {
-      id: 'cnpj-guide',
-      title: 'Abertura de CNPJ',
-      description: 'Procedimentos para constituição de pessoa jurídica',
-      scope: 'FEDERAL',
-      category: 'Empresarial',
-      lastUpdated: '2024-01-05',
-      serviceType: 'CNPJ',
-      steps: [
-        'Consultar viabilidade do nome',
-        'Elaborar contrato social',
-        'Registrar na Junta Comercial',
-        'Inscrever na Receita Federal',
-        'Obter licenças municipais'
-      ],
-      documents: [
-        'Contrato social',
-        'CPF e RG dos sócios',
-        'Comprovante de endereço',
-        'Consulta de viabilidade'
-      ]
-    },
-    {
-      id: 'esocial-guide',
-      title: 'e-Social Doméstico',
-      description: 'Cadastro e gestão de empregados domésticos',
-      scope: 'FEDERAL',
-      category: 'Trabalhista',
-      lastUpdated: '2024-01-12',
-      serviceType: 'ESOCIAL',
-      steps: [
-        'Cadastrar empregador no e-Social',
-        'Cadastrar empregado doméstico',
-        'Enviar evento de admissão',
-        'Gerar guia DAE mensalmente',
-        'Enviar folha de pagamento'
-      ],
-      documents: [
-        'CPF do empregador',
-        'Dados do empregado',
-        'Contrato de trabalho',
-        'Exames médicos'
-      ]
-    },
-    {
-      id: 'alvara-municipal',
-      title: 'Alvará de Funcionamento Municipal',
-      description: 'Como obter licença municipal para funcionamento',
-      scope: 'MUNICIPAL',
-      category: 'Licenças',
-      lastUpdated: '2024-01-08',
-      serviceType: 'ALVARA',
-      steps: [
-        'Consultar código de atividade municipal',
-        'Verificar zoneamento do local',
-        'Reunir documentação exigida',
-        'Protocolar pedido na prefeitura',
-        'Aguardar vistoria e aprovação'
-      ],
-      documents: [
-        'CNPJ ou CPF',
-        'Contrato de locação ou escritura',
-        'Projeto arquitetônico (se exigido)',
-        'Auto de vistoria do corpo de bombeiros'
-      ]
-    },
-    {
-      id: 'iss-municipal',
-      title: 'ISS - Imposto sobre Serviços',
-      description: 'Orientações sobre ISS municipal',
-      scope: 'MUNICIPAL',
-      category: 'Tributos Municipais',
-      lastUpdated: '2024-01-15',
-      serviceType: 'ISS',
-      steps: [
-        'Identificar local de prestação do serviço',
-        'Verificar alíquota aplicável',
-        'Emitir nota fiscal de serviço',
-        'Calcular imposto devido',
-        'Recolher até o vencimento'
-      ],
-      documents: [
-        'Inscrição municipal',
-        'Notas fiscais emitidas',
-        'Livro de registro de serviços',
-        'Guias de recolhimento'
-      ]
-    },
-    {
-      id: 'icms-estadual',
-      title: 'ICMS - Imposto sobre Circulação de Mercadorias',
-      description: 'Orientações sobre ICMS estadual',
-      scope: 'ESTADUAL',
-      category: 'Tributos Estaduais',
-      lastUpdated: '2024-01-10',
-      serviceType: 'ICMS',
-      steps: [
-        'Verificar enquadramento no regime',
-        'Emitir notas fiscais corretamente',
-        'Escriturar livros fiscais',
-        'Apurar ICMS mensalmente',
-        'Transmitir obrigações acessórias'
-      ],
-      documents: [
-        'Inscrição estadual',
-        'Notas fiscais de entrada e saída',
-        'Livros fiscais',
-        'SPED Fiscal'
-      ]
-    }
-  ]
-
-  // Verificar autenticação e carregar dados
+  // Check authentication
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('coordinator_token')
-      const userData = localStorage.getItem('coordinator_user')
+    const checkAuth = () => {
+      const token = localStorage.getItem('naf_auth_token')
+      const userData = localStorage.getItem('naf_user_data')
 
       if (!token || !userData) {
-        router.push('/coordinator-login')
+        router.push('/naf-login')
         return
       }
 
       try {
         setUser(JSON.parse(userData))
+      } catch (error) {
+        router.push('/naf-login')
+      }
+    }
 
-        // Buscar dados do dashboard
-        const response = await fetch('/api/coordinator/dashboard/stats', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+    checkAuth()
+  }, [router])
 
+  // Load dashboard data
+  useEffect(() => {
+    if (!user) return
+
+    const loadDashboardData = async () => {
+      try {
+        const response = await fetch('/api/fiscal-appointments')
         if (response.ok) {
           const data = await response.json()
-          setDashboardData(data)
+          setAppointments(data.appointments || [])
+          setStats(data.stats || [])
         } else {
-          setError('Erro ao carregar dados')
+          setError('Erro ao carregar dados do dashboard')
         }
       } catch (error) {
         setError('Erro de conexão')
@@ -331,37 +111,34 @@ export default function NAFManagementPage() {
       }
     }
 
-    checkAuth()
-  }, [router])
+    loadDashboardData()
+  }, [user])
+
+  // Calculate dashboard metrics
+  const totalAppointments = appointments.length
+  const completedAppointments = appointments.filter(a => a.status === 'CONCLUIDO').length
+  const pendingAppointments = appointments.filter(a => a.status === 'PENDENTE').length
+  const confirmedAppointments = appointments.filter(a => a.status === 'CONFIRMADO').length
+
+  // Students count (simulated for now)
+  const activeStudents = 8
 
   const handleLogout = () => {
-    localStorage.removeItem('coordinator_token')
-    localStorage.removeItem('coordinator_user')
-    router.push('/coordinator-login')
+    localStorage.removeItem('naf_auth_token')
+    localStorage.removeItem('naf_user_data')
+    router.push('/naf-login')
   }
 
-  const getScopeIcon = (scope: string) => {
-    switch (scope) {
-      case 'FEDERAL': return <Building2 className="h-4 w-4" />
-      case 'ESTADUAL': return <Scale className="h-4 w-4" />
-      case 'MUNICIPAL': return <Users className="h-4 w-4" />
-      default: return <FileText className="h-4 w-4" />
-    }
-  }
-
-  const getScopeColor = (scope: string) => {
-    switch (scope) {
-      case 'FEDERAL': return 'bg-blue-100 text-blue-800'
-      case 'ESTADUAL': return 'bg-green-100 text-green-800'
-      case 'MUNICIPAL': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
+  const getFilteredAppointments = () => {
+    if (selectedStatus === 'all') return appointments
+    return appointments.filter(appointment => appointment.status === selectedStatus)
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDENTE': return 'bg-yellow-100 text-yellow-800'
       case 'CONFIRMADO': return 'bg-blue-100 text-blue-800'
+      case 'EM_ANDAMENTO': return 'bg-orange-100 text-orange-800'
       case 'CONCLUIDO': return 'bg-green-100 text-green-800'
       case 'CANCELADO': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
@@ -370,59 +147,27 @@ export default function NAFManagementPage() {
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
-      case 'URGENTE': return 'bg-red-100 text-red-800'
-      case 'ALTA': return 'bg-orange-100 text-orange-800'
+      case 'BAIXA': return 'bg-green-100 text-green-800'
       case 'NORMAL': return 'bg-blue-100 text-blue-800'
-      case 'BAIXA': return 'bg-gray-100 text-gray-800'
+      case 'ALTA': return 'bg-orange-100 text-orange-800'
+      case 'URGENTE': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getServiceStats = (serviceType: string): ServiceStats | null => {
-    return dashboardData?.fiscalAppointments?.serviceBreakdown?.[serviceType] || null
-  }
-
-  const getFilteredAppointments = () => {
-    if (!dashboardData?.fiscalAppointments?.recentAppointments) return []
-
-    let appointments = dashboardData.fiscalAppointments.recentAppointments
-
-    if (selectedService !== 'all') {
-      appointments = appointments.filter(apt => apt.service_type === selectedService)
-    }
-
-    if (selectedStatus !== 'all') {
-      appointments = appointments.filter(apt => apt.status === selectedStatus)
-    }
-
-    return appointments
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Carregando painel de gestão...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando painel NAF...</p>
         </div>
       </div>
     )
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Alert className="max-w-md">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-            <Button onClick={() => window.location.reload()} className="ml-4">
-              Tentar novamente
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
+  if (!user) {
+    return null
   }
 
   return (
@@ -432,29 +177,23 @@ export default function NAFManagementPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
-              <Link href="/coordinator-dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Gestão NAF - Orientações Fiscais
-                </h1>
-                <p className="text-gray-600">
-                  Bem-vindo, {user?.email} | Gerencie todos os serviços e agendamentos
-                </p>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Gestão NAF - Orientações Fiscais
+                  </h1>
+                  <p className="text-gray-600">
+                    Bem-vindo, {user?.email} | Painel Administrativo
+                  </p>
+                </div>
               </div>
             </div>
+
             <div className="flex items-center space-x-4">
-              <Link href="/fiscal-guides">
-                <Button variant="outline" size="sm">
-                  <Eye className="h-4 w-4 mr-2" />
-                  Ver Guias Públicos
-                </Button>
-              </Link>
-              <Button onClick={handleLogout} variant="outline">
+              <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
               </Button>
@@ -464,289 +203,222 @@ export default function NAFManagementPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Métricas Principais */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Agendamentos</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardData?.fiscalAppointments?.totalAppointments || 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardData?.fiscalAppointments?.pendingAppointments || 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Confirmados</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardData?.fiscalAppointments?.confirmedAppointments || 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Urgentes</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardData?.fiscalAppointments?.urgentAppointments || 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="appointments">Atendimentos</TabsTrigger>
+            <TabsTrigger value="services">Serviços</TabsTrigger>
           </TabsList>
 
+          {/* Visão Geral */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Serviços Fiscais */}
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Serviços de Orientação Fiscal</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {fiscalServices.map((service) => {
-                  const stats = getServiceStats(service.serviceType)
-                  return (
-                    <Card key={service.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge className={`${getScopeColor(service.scope)} flex items-center gap-1`}>
-                                {getScopeIcon(service.scope)}
-                                {service.scope}
-                              </Badge>
-                              <Badge variant="outline">{service.category}</Badge>
-                            </div>
-                            <CardTitle className="text-lg">{service.title}</CardTitle>
-                            <CardDescription className="mt-2">{service.description}</CardDescription>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {/* Estatísticas do Serviço */}
-                        {stats ? (
-                          <div className="space-y-3 mb-4">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Total de solicitações</span>
-                              <span className="font-medium">{stats.total}</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-yellow-600">Pendentes:</span>
-                                <span>{stats.pending}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-blue-600">Confirmados:</span>
-                                <span>{stats.confirmed}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-green-600">Concluídos:</span>
-                                <span>{stats.completed}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-red-600">Urgentes:</span>
-                                <span>{stats.urgent}</span>
-                              </div>
-                            </div>
-                            {stats.total > 0 && (
-                              <Progress
-                                value={(stats.completed / stats.total) * 100}
-                                className="h-2"
-                              />
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-center text-gray-500 text-sm py-4">
-                            Nenhuma solicitação ainda
-                          </div>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <Settings className="h-4 w-4 mr-2" />
-                            Gerenciar
-                          </Button>
-                          <Button size="sm" onClick={() => setSelectedService(service.serviceType)}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver Agendamentos
-                          </Button>
-                        </div>
-
-                        <div className="mt-4 text-xs text-gray-500">
-                          Última atualização: {new Date(service.lastUpdated).toLocaleDateString('pt-BR')}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-
-                {/* Card Orientação Personalizada */}
-                <Card className="border-2 border-dashed border-blue-300 bg-blue-50">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-blue-900">Orientação Personalizada</CardTitle>
-                    <CardDescription className="text-blue-700">
-                      Atendimento individualizado para casos específicos
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="text-sm text-blue-800">
-                        • Casos não cobertos pelos guias padrão<br/>
-                        • Situações complexas que requerem análise individual<br/>
-                        • Orientação específica por área de especialização
-                      </div>
-                      <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Gerenciar Orientações
-                      </Button>
+            {/* Métricas principais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Total de Atendimentos */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total de Atendimentos</p>
+                      <p className="text-3xl font-bold text-gray-900">{totalAppointments}</p>
+                      <p className="text-sm text-green-600 font-medium">+23% este mês</p>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Concluídos */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Concluídos</p>
+                      <p className="text-3xl font-bold text-gray-900">{completedAppointments}</p>
+                      <p className="text-sm text-gray-500">{totalAppointments > 0 ? Math.round((completedAppointments / totalAppointments) * 100) : 0}% do total</p>
+                    </div>
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pendentes */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Pendentes</p>
+                      <p className="text-3xl font-bold text-gray-900">{pendingAppointments}</p>
+                      <p className="text-sm text-gray-500">Aguardando atendimento</p>
+                    </div>
+                    <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                      <Clock className="h-6 w-6 text-yellow-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Estudantes Ativos */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Estudantes Ativos</p>
+                      <p className="text-3xl font-bold text-gray-900">{activeStudents}</p>
+                      <p className="text-sm text-gray-500">Realizando atendimentos</p>
+                    </div>
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Users className="h-6 w-6 text-purple-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Atendimentos por Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Atendimentos por Status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Concluído</span>
+                      <span className="text-sm text-gray-500">{completedAppointments} atendimentos</span>
+                    </div>
+                    <Progress value={totalAppointments > 0 ? (completedAppointments / totalAppointments) * 100 : 0} className="h-2" />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Em Andamento</span>
+                      <span className="text-sm text-gray-500">{confirmedAppointments} atendimentos</span>
+                    </div>
+                    <Progress value={totalAppointments > 0 ? (confirmedAppointments / totalAppointments) * 100 : 0} className="h-2" />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Agendado</span>
+                      <span className="text-sm text-gray-500">{confirmedAppointments} atendimentos</span>
+                    </div>
+                    <Progress value={totalAppointments > 0 ? (confirmedAppointments / totalAppointments) * 100 : 0} className="h-2" />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Confirmado</span>
+                      <span className="text-sm text-gray-500">{confirmedAppointments} atendimentos</span>
+                    </div>
+                    <Progress value={totalAppointments > 0 ? (confirmedAppointments / totalAppointments) * 100 : 0} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Atendimentos por Categoria */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Atendimentos por Categoria</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">PESSOA FÍSICA</span>
+                      <span className="text-sm text-gray-500">1</span>
+                    </div>
+                    <Progress value={25} className="h-2" />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">MEI</span>
+                      <span className="text-sm text-gray-500">1</span>
+                    </div>
+                    <Progress value={25} className="h-2" />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">RURAL</span>
+                      <span className="text-sm text-gray-500">1</span>
+                    </div>
+                    <Progress value={25} className="h-2" />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">OSC</span>
+                      <span className="text-sm text-gray-500">1</span>
+                    </div>
+                    <Progress value={25} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
+          {/* Atendimentos */}
           <TabsContent value="appointments" className="space-y-6">
-            {/* Filtros */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Filtrar por Serviço
-                    </label>
-                    <select
-                      value={selectedService}
-                      onChange={(e) => setSelectedService(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">Todos os Serviços</option>
-                      {fiscalServices.map((service) => (
-                        <option key={service.serviceType} value={service.serviceType}>
-                          {service.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Filtrar por Status
-                    </label>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">Todos os Status</option>
-                      <option value="PENDENTE">Pendente</option>
-                      <option value="CONFIRMADO">Confirmado</option>
-                      <option value="CONCLUIDO">Concluído</option>
-                      <option value="CANCELADO">Cancelado</option>
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Gerenciar Atendimentos</h2>
+              <div className="flex items-center space-x-2">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="border rounded-md px-3 py-2"
+                >
+                  <option value="all">Todos os Status</option>
+                  <option value="PENDENTE">Pendente</option>
+                  <option value="CONFIRMADO">Confirmado</option>
+                  <option value="EM_ANDAMENTO">Em Andamento</option>
+                  <option value="CONCLUIDO">Concluído</option>
+                  <option value="CANCELADO">Cancelado</option>
+                </select>
+              </div>
+            </div>
 
-            {/* Lista de Agendamentos */}
             <div className="space-y-4">
               {getFilteredAppointments().map((appointment) => (
-                <Card key={appointment.protocol} className="hover:shadow-md transition-shadow">
+                <Card key={appointment.id}>
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-medium text-gray-900">{appointment.client_name}</h3>
+                        <div className="flex items-center space-x-3 mb-3">
                           <Badge className={getStatusColor(appointment.status)}>
                             {appointment.status}
                           </Badge>
                           <Badge className={getUrgencyColor(appointment.urgency_level)}>
                             {appointment.urgency_level}
                           </Badge>
+                          <span className="text-sm font-mono text-gray-500">
+                            {appointment.protocol}
+                          </span>
                         </div>
+
+                        <h3 className="font-semibold text-lg text-gray-900 mb-2">
+                          {appointment.service_title}
+                        </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                          <div className="space-y-1">
-                            <p className="flex items-center gap-2">
-                              <FileText className="h-4 w-4" />
-                              {appointment.service_title}
-                            </p>
-                            <p className="flex items-center gap-2">
-                              <Mail className="h-4 w-4" />
-                              {appointment.client_email}
-                            </p>
-                            <p className="flex items-center gap-2">
-                              <Phone className="h-4 w-4" />
-                              {appointment.client_phone}
-                            </p>
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4" />
+                            <span>{appointment.client_name}</span>
                           </div>
-                          <div className="space-y-1">
-                            <p className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4" />
-                              {appointment.address_city}, {appointment.address_state}
-                            </p>
-                            <p className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              {appointment.preferred_date ? new Date(appointment.preferred_date).toLocaleDateString('pt-BR') : 'Data não especificada'}
-                            </p>
-                            <p className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
-                              {appointment.preferred_period || 'Período não especificado'}
-                            </p>
+                          <div className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4" />
+                            <span>{appointment.client_email}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4" />
+                            <span>{appointment.client_phone}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{appointment.address_city}, {appointment.address_state}</span>
                           </div>
                         </div>
 
-                        {appointment.client_notes && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                            <p className="text-sm text-gray-700">
-                              <strong>Observações:</strong> {appointment.client_notes}
-                            </p>
-                          </div>
-                        )}
+                        <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                          <p className="text-sm text-gray-700">
+                            <strong>Observações:</strong> {appointment.client_notes || 'Nenhuma observação'}
+                          </p>
+                        </div>
 
-                        <div className="mt-3 flex items-center justify-between">
-                          <span className="text-xs text-gray-500 font-mono">
-                            Protocolo: {appointment.protocol}
-                          </span>
+                        <div className="mt-2">
                           <span className="text-xs text-gray-500">
                             Criado em: {new Date(appointment.created_at).toLocaleDateString('pt-BR')} às {new Date(appointment.created_at).toLocaleTimeString('pt-BR')}
                           </span>
@@ -782,6 +454,79 @@ export default function NAFManagementPage() {
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          {/* Serviços */}
+          <TabsContent value="services" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                'Cadastro de CPF - Guia Completo',
+                'MEI - Formalização e Gestão',
+                'Declaração de Imposto de Renda PF',
+                'ITR - Imposto Territorial Rural',
+                'Abertura de CNPJ',
+                'e-Social Doméstico',
+                'Alvará de Funcionamento Municipal',
+                'ISS - Imposto sobre Serviços',
+                'ICMS - Imposto sobre Circulação de Mercadorias'
+              ].map((service, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{service}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Total de solicitações</span>
+                        <span className="font-semibold">{stats.find(s => s.service_title === service)?.total_appointments || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Pendentes</span>
+                        <span className="text-yellow-600">{stats.find(s => s.service_title === service)?.pending_count || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Concluídos</span>
+                        <span className="text-green-600">{stats.find(s => s.service_title === service)?.completed_count || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Seção Precisa de Orientação Personalizada */}
+            <Card className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+              <CardContent className="p-8 text-center">
+                <h2 className="text-2xl font-bold mb-4">
+                  Precisa de Orientação Personalizada?
+                </h2>
+                <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+                  Nossa equipe especializada está pronta para oferecer orientação personalizada
+                  em questões fiscais e contábeis. Agende uma consulta individual para receber
+                  suporte direcionado às suas necessidades específicas.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link href="/schedule">
+                    <Button
+                      variant="secondary"
+                      className="bg-white text-blue-600 hover:bg-blue-50"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Agendar Orientação
+                    </Button>
+                  </Link>
+                  <Link href="/contact">
+                    <Button
+                      variant="outline"
+                      className="border-white text-white hover:bg-white/10"
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      Entre em Contato
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

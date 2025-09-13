@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar, BookOpen, BarChart3, UserCheck, Zap } from 'lucide-react'
+import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar, BookOpen, BarChart3, UserCheck, Zap, Facebook, Instagram, Linkedin } from 'lucide-react'
 import NAFServicesShowcase from "@/components/NAFServicesShowcase"
 
 export default function Home() {
@@ -216,7 +216,7 @@ export default function Home() {
               </Card>
             </Link>
             
-            <Link href="/naf-management">
+            <Link href="/naf-login">
               <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
                 <CardContent className="p-6 text-center">
                   <Zap className="h-12 w-12 text-white mx-auto mb-4" />
@@ -317,7 +317,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="bg-blue-600 p-2 rounded-lg">
@@ -325,34 +325,64 @@ export default function Home() {
                 </div>
                 <span className="text-xl font-bold">NAF Contábil</span>
               </div>
-              <p className="text-gray-400">
-                Núcleo de Apoio Contábil e Fiscal - Sistema consolidado e eficiente.
+              <p className="text-gray-400 text-sm">
+                Núcleo de Apoio Contábil e Fiscal - Sistema consolidado e eficiente para gestão e atendimento.
               </p>
+              <div className="flex space-x-4 mt-6">
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Facebook className="h-6 w-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Instagram className="h-6 w-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Linkedin className="h-6 w-6" />
+                </Link>
+              </div>
             </div>
             
             <div>
               <h3 className="text-lg font-semibold mb-4">Acesso Rápido</h3>
               <div className="space-y-2">
-                <Link href="/dashboard" className="block text-gray-400 hover:text-white">
+                <Link href="/dashboard" className="block text-gray-400 hover:text-white text-sm">
                   Dashboard Principal
                 </Link>
-                <Link href="/login" className="block text-gray-400 hover:text-white">
+                <Link href="/login" className="block text-gray-400 hover:text-white text-sm">
                   Login
+                </Link>
+                <Link href="/naf-scheduling" className="block text-gray-400 hover:text-white text-sm">
+                  Agendar Atendimento
+                </Link>
+                <Link href="/services" className="block text-gray-400 hover:text-white text-sm">
+                  Nossos Serviços
                 </Link>
               </div>
             </div>
             
             <div>
+              <h3 className="text-lg font-semibold mb-4">Legal</h3>
+              <div className="space-y-2">
+                <Link href="/privacy-policy" className="block text-gray-400 hover:text-white text-sm">
+                  Política de Privacidade
+                </Link>
+                <Link href="/terms-of-service" className="block text-gray-400 hover:text-white text-sm">
+                  Termos de Serviço
+                </Link>
+              </div>
+            </div>
+
+            <div>
               <h3 className="text-lg font-semibold mb-4">Contato</h3>
-              <div className="space-y-2 text-gray-400">
+              <div className="space-y-2 text-gray-400 text-sm">
                 <p>Email: naf@instituicao.edu.br</p>
                 <p>Telefone: (11) 1234-5678</p>
+                <p>Endereço: Campus Universitário - NAF</p>
               </div>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 NAF Contábil. Sistema otimizado e consolidado.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
+            <p>&copy; 2025 NAF Contábil. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
