@@ -29,37 +29,23 @@ export default function ScrollToTop() {
     })
   }
 
+  if (!isVisible) return null
+
   return (
-    <>
-      {isVisible && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50
-                     bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700
-                     text-white p-3 rounded-full shadow-lg hover:shadow-xl
-                     transition-all duration-300 ease-in-out
-                     hover:scale-110 active:scale-95
-                     animate-bounce-slow"
-          aria-label="Voltar ao topo"
-        >
-          <ChevronUp className="h-6 w-6" />
-        </button>
-      )}
-
-      <style jsx>{`
-        @keyframes bounce-slow {
-          0%, 100% {
-            transform: translateY(0) translateX(-50%);
-          }
-          50% {
-            transform: translateY(-10px) translateX(-50%);
-          }
-        }
-
-        .animate-bounce-slow {
-          animation: bounce-slow 2s infinite;
-        }
-      `}</style>
-    </>
+    <button
+      onClick={scrollToTop}
+      className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50
+                 bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700
+                 text-white p-4 rounded-full shadow-lg hover:shadow-xl
+                 transition-all duration-300 ease-in-out
+                 hover:scale-110 active:scale-95
+                 border-2 border-blue-500 dark:border-purple-500
+                 animate-pulse hover:animate-none
+                 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90"
+      aria-label="Voltar ao topo"
+      title="Voltar ao topo"
+    >
+      <ChevronUp className="h-6 w-6 stroke-2" />
+    </button>
   )
 }
