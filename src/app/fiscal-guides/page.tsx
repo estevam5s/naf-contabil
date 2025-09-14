@@ -40,6 +40,51 @@ export default function FiscalGuidesPage() {
   const [selectedScope, setSelectedScope] = useState<string>('ALL')
   const [loading, setLoading] = useState(true)
 
+  const handleDownloadGuide = async (guideId: string) => {
+    try {
+      const response = await fetch(`/api/download-guide?id=${guideId}`)
+
+      if (!response.ok) {
+        throw new Error('Erro ao baixar o guia')
+      }
+
+      // Obter o blob do PDF
+      const blob = await response.blob()
+
+      // Criar URL temporária para download
+      const url = window.URL.createObjectURL(blob)
+
+      // Criar link temporário e fazer download
+      const link = document.createElement('a')
+      link.href = url
+
+      // Definir nome do arquivo baseado no ID
+      const fileNames: { [key: string]: string } = {
+        'cpf-guide': 'Guia-Cadastro-CPF.pdf',
+        'mei-guide': 'Guia-MEI-Formalizacao.pdf',
+        'ir-guide': 'Guia-Declaracao-IR-PF.pdf',
+        'itr-guide': 'Guia-ITR-Territorial-Rural.pdf',
+        'cnpj-guide': 'Guia-Abertura-CNPJ.pdf',
+        'esocial-guide': 'Guia-eSocial-Domestico.pdf',
+        'alvara-municipal': 'Guia-Alvara-Funcionamento.pdf',
+        'iss-municipal': 'Guia-ISS-Servicos.pdf',
+        'icms-estadual': 'Guia-ICMS-Mercadorias.pdf'
+      }
+
+      link.download = fileNames[guideId] || 'guia-fiscal.pdf'
+      document.body.appendChild(link)
+      link.click()
+
+      // Limpeza
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+    } catch (error) {
+      console.error('Erro ao baixar guia:', error)
+      alert('Erro ao baixar o guia. Tente novamente.')
+    }
+  }
+
   const fiscalGuides = [
     {
       id: 'cpf-guide',
@@ -422,7 +467,11 @@ export default function FiscalGuidesPage() {
                       Agendar Orientação
                     </Button>
                   </Link>
-                  <Button size="sm" variant="outline">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownloadGuide(guide.id)}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Baixar Guia
                   </Button>
