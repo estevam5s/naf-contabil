@@ -16,6 +16,7 @@ import {
   Mail,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   BookOpen,
   Target,
   Award,
