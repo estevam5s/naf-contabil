@@ -28,43 +28,6 @@
     --input: 214.3 31.8% 91.4%;           /* Inputs cinza claro */
     --ring: 221.2 83.2% 53.3%;            /* Ring azul */
     --radius: 0.5rem;
-
-    /* Custom Dracula Colors para Dark Mode */
-    --dracula-background: 231 15% 18%;
-    --dracula-current-line: 232 14% 31%;
-    --dracula-selection: 232 14% 31%;
-    --dracula-foreground: 60 30% 96%;
-    --dracula-comment: 225 27% 51%;
-    --dracula-cyan: 191 97% 77%;
-    --dracula-green: 135 94% 65%;
-    --dracula-orange: 31 100% 71%;
-    --dracula-pink: 326 100% 74%;
-    --dracula-purple: 265 89% 78%;
-    --dracula-red: 0 100% 67%;
-    --dracula-yellow: 65 92% 76%;
-  }
-
-  .dark {
-    /* Dark Theme - Dracula Colors */
-    --background: var(--dracula-background);
-    --foreground: var(--dracula-foreground);
-    --card: 232 14% 31%;
-    --card-foreground: var(--dracula-foreground);
-    --popover: var(--dracula-background);
-    --popover-foreground: var(--dracula-foreground);
-    --primary: var(--dracula-purple);
-    --primary-foreground: var(--dracula-background);
-    --secondary: var(--dracula-current-line);
-    --secondary-foreground: var(--dracula-foreground);
-    --muted: var(--dracula-current-line);
-    --muted-foreground: var(--dracula-comment);
-    --accent: var(--dracula-pink);
-    --accent-foreground: var(--dracula-background);
-    --destructive: var(--dracula-red);
-    --destructive-foreground: var(--dracula-foreground);
-    --border: var(--dracula-current-line);
-    --input: var(--dracula-current-line);
-    --ring: var(--dracula-purple);
   }
 }
 
@@ -72,125 +35,13 @@
   * {
     @apply border-solid;
   }
+
+  html, body {
+    background-color: white;
+    color: hsl(var(--foreground));
+  }
+
   body {
     @apply bg-background text-foreground transition-colors duration-300;
-  }
-
-  /* Força fundo branco no tema light */
-  :root:not(.dark) {
-    background-color: white !important;
-  }
-
-  /* Força fundo branco no body tema light */
-  body.light {
-    background-color: white !important;
-  }
-
-  html.light {
-    background-color: white !important;
-  }
-
-  /* Light theme overrides */
-  .light {
-    --background: 0 0% 100% !important;
-    --foreground: 222.2 84% 4.9% !important;
-  }
-}
-
-/* Dracula Theme Specific Styles */
-@layer components {
-  /* Dark mode gradients */
-  .dark .bg-gradient-to-br {
-    @apply from-slate-900 via-gray-900 to-slate-800;
-  }
-
-  .dark .bg-gradient-to-r {
-    @apply from-purple-600 to-pink-600;
-  }
-
-  /* Custom Dracula colors for specific elements */
-  .dracula-bg-primary {
-    background: hsl(var(--dracula-background));
-  }
-
-  .dracula-bg-secondary {
-    background: hsl(var(--dracula-current-line));
-  }
-
-  .dracula-text-primary {
-    color: hsl(var(--dracula-foreground));
-  }
-
-  .dracula-text-secondary {
-    color: hsl(var(--dracula-comment));
-  }
-
-  .dracula-accent-purple {
-    color: hsl(var(--dracula-purple));
-  }
-
-  .dracula-accent-pink {
-    color: hsl(var(--dracula-pink));
-  }
-
-  .dracula-accent-green {
-    color: hsl(var(--dracula-green));
-  }
-
-  .dracula-accent-cyan {
-    color: hsl(var(--dracula-cyan));
-  }
-
-  .dracula-accent-orange {
-    color: hsl(var(--dracula-orange));
-  }
-
-  .dracula-accent-yellow {
-    color: hsl(var(--dracula-yellow));
-  }
-
-  /* Dark theme card styles */
-  .dark .bg-white\/5 {
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .dark .bg-white\/10 {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .dark .bg-white\/20 {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  .dark .border-white\/10 {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .dark .border-white\/20 {
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  /* Dark navigation */
-  .dark .nav-backdrop {
-    background: rgba(40, 42, 54, 0.95);
-  }
-
-  /* Dark scrollbar */
-  .dark ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .dark ::-webkit-scrollbar-track {
-    background: hsl(var(--dracula-background));
-  }
-
-  .dark ::-webkit-scrollbar-thumb {
-    background: hsl(var(--dracula-current-line));
-    border-radius: 4px;
-  }
-
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--dracula-comment));
   }
 }

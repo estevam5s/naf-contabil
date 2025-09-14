@@ -23,7 +23,6 @@ import {
   X
 } from 'lucide-react'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
-import ThemeToggle from '@/components/ThemeToggle'
 
 const MainNavigation = () => {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -320,9 +319,6 @@ const MainNavigation = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
-            {/* Theme Toggle */}
-            <ThemeToggle />
-
             {/* Notification Center */}
             <NotificationCenter userId="guest-user" userType="user" />
 
