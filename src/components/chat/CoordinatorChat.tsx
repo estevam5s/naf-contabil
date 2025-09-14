@@ -87,9 +87,13 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
     const interval = setInterval(() => {
       loadConversations()
       loadPendingRequests()
+      // Recarregar mensagens da conversa selecionada
+      if (selectedConversation) {
+        loadMessages(selectedConversation.id)
+      }
     }, 3000)
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedConversation])
 
   const loadConversations = async () => {
     setRefreshing(true)
@@ -127,7 +131,15 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
       const response = await fetch(`/api/chat/messages?conversation_id=${conversationId}`)
       const data = await response.json()
       if (data.messages) {
-        setMessages(data.messages)
+        // Só atualizar se houver mudanças
+        const currentLength = messages.length
+        const newLength = data.messages.length
+
+        if (newLength !== currentLength ||
+            JSON.stringify(messages) !== JSON.stringify(data.messages)) {
+          setMessages(data.messages)
+          console.log(`Mensagens atualizadas: ${newLength} mensagens carregadas`)
+        }
 
         // Marcar mensagens do usuário como lidas
         await fetch('/api/chat/messages', {
@@ -261,7 +273,7 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
     setIsLoading(true)
 
     try {
-      await fetch('/api/chat/messages', {
+      const response = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -276,10 +288,21 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
         })
       })
 
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao enviar mensagem')
+      }
+
+      console.log('Mensagem enviada com sucesso:', data)
+
       // Atualizar lista de conversas
       loadConversations()
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
+      // Remover mensagem otimista em caso de erro
+      setMessages(prev => prev.filter(msg => msg.id !== coordinatorMessage.id))
+      alert('Erro ao enviar mensagem. Tente novamente.')
     } finally {
       setIsLoading(false)
     }

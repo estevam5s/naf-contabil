@@ -340,7 +340,14 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
       const response = await fetch(`/api/chat/messages?conversation_id=${conversationId}`)
       const data = await response.json()
       if (data.messages) {
-        setMessages(data.messages)
+        const currentMessagesLength = messages.length
+        const newMessagesLength = data.messages.length
+
+        // Só atualizar se houver mudanças para evitar re-renders desnecessários
+        if (newMessagesLength !== currentMessagesLength ||
+            JSON.stringify(messages) !== JSON.stringify(data.messages)) {
+          setMessages(data.messages)
+        }
 
         // Verificar se há mensagens de coordenador
         const hasCoordinatorMessages = data.messages.some(
@@ -376,21 +383,28 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
         const conv = data.conversation
         if (conv.status === 'ended' && chatStatus !== 'ended') {
           setChatStatus('ended')
-          loadMessages(conversation.id)
         }
+        // Sempre carrega mensagens para pegar novas mensagens do coordenador
+        loadMessages(conversation.id)
       }
     } catch (error) {
       console.error('Erro ao verificar status da conversa:', error)
     }
   }
 
-  // Polling para verificar mudanças de status
+  // Polling para verificar mudanças de status e novas mensagens
   useEffect(() => {
-    if (!conversation || chatStatus === 'ai') return
+    if (!conversation) return
 
     const interval = setInterval(() => {
-      checkConversationStatus()
-    }, 3000)
+      if (chatStatus === 'ai') {
+        // Verificar apenas status quando em modo AI
+        checkConversationStatus()
+      } else {
+        // Verificar mensagens e status quando em chat humano
+        checkConversationStatus()
+      }
+    }, 2000) // Reduzido para 2 segundos para melhor responsividade
 
     return () => clearInterval(interval)
   }, [conversation, chatStatus])
