@@ -23,9 +23,11 @@ import {
   Star,
   Target,
   ArrowLeft,
-  LogOut
+  LogOut,
+  MessageCircle
 } from 'lucide-react'
 import Link from 'next/link'
+import CoordinatorChat from '@/components/chat/CoordinatorChat'
 
 interface MetricData {
   period: string
@@ -326,11 +328,15 @@ export default function CoordinatorDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="services">Serviços</TabsTrigger>
             <TabsTrigger value="students">Estudantes</TabsTrigger>
             <TabsTrigger value="fiscal">Orient. Fiscais</TabsTrigger>
+            <TabsTrigger value="chat">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Chat
+            </TabsTrigger>
             <TabsTrigger value="reports">Relatórios</TabsTrigger>
           </TabsList>
 
@@ -786,6 +792,26 @@ export default function CoordinatorDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="chat" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  Central de Atendimento via Chat
+                </CardTitle>
+                <CardDescription>
+                  Responda às dúvidas dos clientes em tempo real. As mensagens não lidas aparecem com destaque.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CoordinatorChat
+                  coordinatorId={user?.id || 'coordinator'}
+                  coordinatorName={user?.name || user?.email || 'Coordenador'}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6">

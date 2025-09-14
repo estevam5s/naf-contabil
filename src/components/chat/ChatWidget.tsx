@@ -18,7 +18,15 @@ import {
   Calendar
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import { v4 as uuidv4 } from 'uuid'
+
+// Função para gerar UUID simples
+const generateId = () => {
+  return 'xxxx-xxxx-4xxx-yxxx-xxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0
+    const v = c == 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
 
 interface Message {
   id: string
@@ -46,7 +54,7 @@ export default function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false)
   const [conversation, setConversation] = useState<Conversation | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [userId] = useState(() => `user_${uuidv4()}`)
+  const [userId] = useState(() => `user_${generateId()}`)
   const [requestHumanAgent, setRequestHumanAgent] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -108,7 +116,7 @@ Como posso ajudar você hoje?
 💡 *Dica: Se precisar de atendimento personalizado, posso conectá-lo com um de nossos especialistas!*`
 
     const message: Message = {
-      id: uuidv4(),
+      id: generateId(),
       content: welcomeMessage,
       sender_type: 'assistant',
       sender_name: 'Assistente NAF',
@@ -139,7 +147,7 @@ Como posso ajudar você hoje?
     if (!inputValue.trim() || isLoading || !conversation) return
 
     const userMessage: Message = {
-      id: uuidv4(),
+      id: generateId(),
       content: inputValue,
       sender_type: 'user',
       sender_name: 'Você',
@@ -178,7 +186,7 @@ Como posso ajudar você hoje?
       if (wantsHuman) {
         setRequestHumanAgent(true)
         const humanRequestMessage: Message = {
-          id: uuidv4(),
+          id: generateId(),
           content: `🤝 **Solicitação de Atendimento Humano**
 
 Entendo que você gostaria de falar com um de nossos especialistas!
@@ -219,7 +227,7 @@ Enquanto isso, posso continuar ajudando com suas dúvidas básicas. O que você 
       const aiData = await aiResponse.json()
 
       const assistantMessage: Message = {
-        id: uuidv4(),
+        id: generateId(),
         content: aiData.response,
         sender_type: 'assistant',
         sender_name: 'Assistente NAF',
@@ -248,7 +256,7 @@ Enquanto isso, posso continuar ajudando com suas dúvidas básicas. O que você 
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       const errorMessage: Message = {
-        id: uuidv4(),
+        id: generateId(),
         content: 'Desculpe, ocorreu um erro. Tente novamente ou entre em contato pelo telefone (48) 98461-4449.',
         sender_type: 'assistant',
         sender_name: 'Assistente NAF',
