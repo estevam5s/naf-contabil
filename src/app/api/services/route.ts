@@ -1,19 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { createClient } from '@supabase/supabase-js'
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
-    const services = await prisma.service.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' }
-    })
+    const { data: services, error } = await supabase
+      .from('naf_services')
+      .select('*')
+      .eq('status', 'ativo')
+      .order('priority_order', { ascending: true })
+
+    if (error) {
+      console.error('Erro ao buscar serviços:', error)
+      return NextResponse.json(
+        { success: false, error: 'Erro ao buscar serviços' },
+        { status: 500 }
+      )
+    }
 
     // Retornar diretamente o array para compatibilidade
-    return NextResponse.json(services)
+    return NextResponse.json(services || [])
   } catch (error) {
     console.error('Erro ao buscar serviços:', error)
     return NextResponse.json(
@@ -26,13 +39,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'COORDINATOR') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { name, description, category, requirements, duration } = body
+    const { name, slug, description, category, requirements, duration } = body
 
     if (!name || !description || !category) {
       return NextResponse.json(
@@ -41,16 +54,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const service = await prisma.service.create({
-      data: {
+    const { data: service, error } = await supabase
+      .from('naf_services')
+      .insert({
         name,
+        slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
         description,
         category,
-        requirements: requirements || '',
-        estimatedDuration: duration || 60,
-        isActive: true
-      }
-    })
+        required_documents: requirements ? [requirements] : [],
+        estimated_duration_minutes: duration || 60,
+        status: 'ativo'
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Erro ao criar serviço:', error)
+      return NextResponse.json(
+        { error: 'Erro ao criar serviço' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(service, { status: 201 })
   } catch (error) {
@@ -65,7 +89,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'COORDINATOR') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
@@ -80,17 +104,27 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const service = await prisma.service.update({
-      where: { id },
-      data: {
+    const { data: service, error } = await supabase
+      .from('naf_services')
+      .update({
         name,
         description,
         category,
-        requirements,
-        estimatedDuration: duration,
-        isActive
-      }
-    })
+        required_documents: requirements ? [requirements] : [],
+        estimated_duration_minutes: duration,
+        status: isActive ? 'ativo' : 'inativo'
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Erro ao atualizar serviço:', error)
+      return NextResponse.json(
+        { error: 'Erro ao atualizar serviço' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(service)
   } catch (error) {
@@ -105,7 +139,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'COORDINATOR') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
@@ -121,10 +155,20 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Desativar em vez de deletar para manter histórico
-    const service = await prisma.service.update({
-      where: { id },
-      data: { isActive: false }
-    })
+    const { data: service, error } = await supabase
+      .from('naf_services')
+      .update({ status: 'inativo' })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Erro ao desativar serviço:', error)
+      return NextResponse.json(
+        { error: 'Erro ao desativar serviço' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ message: 'Serviço desativado com sucesso' })
   } catch (error) {
