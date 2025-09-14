@@ -36,11 +36,17 @@ interface MetricData {
 
 interface ServiceMetrics {
   service_name: string
+  service_id?: string
+  service_description?: string
+  service_category?: string
+  service_difficulty?: string
+  is_featured?: boolean
   requests_count: number
   completed_count: number
   pending_count: number
   avg_duration_minutes: number
   satisfaction_rating: number
+  views_count?: number
 }
 
 interface StudentData {
@@ -440,15 +446,41 @@ export default function CoordinatorDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {dashboardData.services.map((service, index) => (
-                    <div key={index} className="border rounded-lg p-4">
+                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-3">
-                        <h3 className="font-medium">{service.service_name}</h3>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium">{service.service_name}</h3>
+                            {service.is_featured && (
+                              <Badge variant="secondary" className="text-xs">
+                                Destaque
+                              </Badge>
+                            )}
+                            {service.service_difficulty && (
+                              <Badge variant="outline" className="text-xs">
+                                {service.service_difficulty}
+                              </Badge>
+                            )}
+                          </div>
+                          {service.service_description && (
+                            <p className="text-sm text-gray-600 mb-2">
+                              {service.service_description.length > 100
+                                ? `${service.service_description.substring(0, 100)}...`
+                                : service.service_description}
+                            </p>
+                          )}
+                          {service.service_category && (
+                            <Badge variant="outline" className="text-xs mb-2">
+                              {service.service_category}
+                            </Badge>
+                          )}
+                        </div>
                         <Badge className="flex items-center space-x-1">
                           <Star className="h-3 w-3" />
-                          <span>{service.satisfaction_rating}</span>
+                          <span>{service.satisfaction_rating.toFixed(1)}</span>
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                         <div>
                           <p className="text-gray-600">Solicitações</p>
                           <p className="font-semibold">{service.requests_count}</p>
@@ -465,16 +497,31 @@ export default function CoordinatorDashboard() {
                           <p className="text-gray-600">Tempo Médio</p>
                           <p className="font-semibold">{service.avg_duration_minutes}min</p>
                         </div>
+                        {service.views_count !== undefined && (
+                          <div>
+                            <p className="text-gray-600">Visualizações</p>
+                            <p className="font-semibold text-blue-600">{service.views_count}</p>
+                          </div>
+                        )}
                       </div>
                       <div className="mt-3">
                         <Progress
-                          value={(service.completed_count / service.requests_count) * 100}
+                          value={service.requests_count > 0 ? (service.completed_count / service.requests_count) * 100 : 0}
                           className="h-2"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Taxa de conclusão: {((service.completed_count / service.requests_count) * 100).toFixed(1)}%
+                          Taxa de conclusão: {service.requests_count > 0 ? ((service.completed_count / service.requests_count) * 100).toFixed(1) : '0.0'}%
                         </p>
                       </div>
+                      {service.service_id && (
+                        <div className="mt-3 flex justify-end">
+                          <Link href={`/services`}>
+                            <Button variant="outline" size="sm">
+                              Ver Detalhes
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

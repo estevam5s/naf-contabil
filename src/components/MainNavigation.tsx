@@ -207,22 +207,22 @@ const MainNavigation = () => {
               </Button>
 
               {dropdowns.portals && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-2 z-50 nav-dropdown">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-3 z-50 nav-dropdown">
                   {navigationRoutes.portals.map((route) => {
                     const IconComponent = route.icon
                     return (
                       <Link
                         key={route.href}
                         href={route.href}
-                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
+                        className={`flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors ${
                           isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                         }`}
                         onClick={closeAllDropdowns}
                       >
-                        <IconComponent className="h-4 w-4 text-gray-600" />
+                        <IconComponent className="h-5 w-5 text-gray-600" />
                         <div className="flex-1">
                           <p className="font-medium text-sm">{route.label}</p>
-                          <p className="text-xs text-gray-500">{route.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">{route.description}</p>
                         </div>
                         <Badge variant="outline" className="text-xs">
                           {route.badge}
@@ -251,22 +251,22 @@ const MainNavigation = () => {
               </Button>
 
               {dropdowns.services && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-2 z-50 nav-dropdown">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-3 z-50 nav-dropdown">
                   {navigationRoutes.services.map((route) => {
                     const IconComponent = route.icon
                     return (
                       <Link
                         key={route.href}
                         href={route.href}
-                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
+                        className={`flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors ${
                           isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                         }`}
                         onClick={closeAllDropdowns}
                       >
-                        <IconComponent className="h-4 w-4 text-gray-600" />
+                        <IconComponent className="h-5 w-5 text-gray-600" />
                         <div className="flex-1">
                           <p className="font-medium text-sm">{route.label}</p>
-                          <p className="text-xs text-gray-500">{route.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">{route.description}</p>
                         </div>
                       </Link>
                     )
@@ -292,22 +292,22 @@ const MainNavigation = () => {
               </Button>
 
               {dropdowns.management && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-2 z-50 nav-dropdown">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-3 z-50 nav-dropdown">
                   {navigationRoutes.auth.map((route) => {
                     const IconComponent = route.icon
                     return (
                       <Link
                         key={route.href}
                         href={route.href}
-                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
+                        className={`flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors ${
                           isActiveRoute(route.href) ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                         }`}
                         onClick={closeAllDropdowns}
                       >
-                        <IconComponent className="h-4 w-4 text-gray-600" />
+                        <IconComponent className="h-5 w-5 text-gray-600" />
                         <div className="flex-1">
                           <p className="font-medium text-sm">{route.label}</p>
-                          <p className="text-xs text-gray-500">{route.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">{route.description}</p>
                         </div>
                       </Link>
                     )
@@ -348,12 +348,12 @@ const MainNavigation = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               {/* Home */}
               <Link href="/" onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
-                <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium ${
+                <div className={`flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium ${
                   isActiveRoute('/') && pathname === '/'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}>
-                  <Home className="h-4 w-4" />
+                  <Home className="h-5 w-5" />
                   Início
                 </div>
               </Link>
@@ -367,12 +367,12 @@ const MainNavigation = () => {
                   const IconComponent = route.icon
                   return (
                     <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
-                      <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
+                      <div className={`flex items-center gap-3 px-3 py-3 rounded-md text-sm ${
                         isActiveRoute(route.href)
                           ? 'bg-blue-100 text-blue-700'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}>
-                        <IconComponent className="h-4 w-4" />
+                        <IconComponent className="h-5 w-5" />
                         {route.label}
                         {route.badge && (
                           <Badge variant="outline" className="ml-auto text-xs">
@@ -394,12 +394,12 @@ const MainNavigation = () => {
                   const IconComponent = route.icon
                   return (
                     <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
-                      <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
+                      <div className={`flex items-center gap-3 px-3 py-3 rounded-md text-sm ${
                         isActiveRoute(route.href)
                           ? 'bg-blue-100 text-blue-700'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}>
-                        <IconComponent className="h-4 w-4" />
+                        <IconComponent className="h-5 w-5" />
                         {route.label}
                       </div>
                     </Link>
@@ -416,12 +416,12 @@ const MainNavigation = () => {
                   const IconComponent = route.icon
                   return (
                     <Link key={route.href} href={route.href} onClick={() => {setIsMobileMenuOpen(false); closeAllDropdowns()}}>
-                      <div className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
+                      <div className={`flex items-center gap-3 px-3 py-3 rounded-md text-sm ${
                         isActiveRoute(route.href)
                           ? 'bg-blue-100 text-blue-700'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}>
-                        <IconComponent className="h-4 w-4" />
+                        <IconComponent className="h-5 w-5" />
                         {route.label}
                       </div>
                     </Link>

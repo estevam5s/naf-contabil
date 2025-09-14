@@ -71,6 +71,17 @@ export async function GET(request: NextRequest) {
       })
     )
 
+    // Buscar serviços NAF disponíveis
+    const { data: nafServices, error: nafServicesError } = await supabase
+      .from('naf_services')
+      .select('*')
+      .eq('status', 'ativo')
+      .order('priority_order', { ascending: true })
+
+    if (nafServicesError) {
+      console.warn('Erro ao buscar serviços NAF:', nafServicesError)
+    }
+
     // Buscar métricas de serviços (dados reais dos atendimentos)
     const { data: allAttendances, error: allAttendancesError } = await supabase
       .from('attendances')
@@ -91,35 +102,67 @@ export async function GET(request: NextRequest) {
       throw fiscalAppointmentsError
     }
 
-    // Agrupar serviços por tipo
-    const serviceGroups = (allAttendances || []).reduce((acc: any, attendance) => {
-      const serviceType = attendance.service_type
-      if (!acc[serviceType]) {
-        acc[serviceType] = {
-          service_name: serviceType,
-          requests_count: 0,
+    // Criar estrutura de serviços baseada nos serviços NAF disponíveis
+    const serviceGroups: any = {}
+
+    // Primeiro, criar entradas para todos os serviços NAF ativos
+    if (nafServices && nafServices.length > 0) {
+      nafServices.forEach((service: any) => {
+        serviceGroups[service.name] = {
+          service_name: service.name,
+          service_id: service.id,
+          service_description: service.description,
+          service_category: service.category,
+          service_difficulty: service.difficulty,
+          is_featured: service.is_featured,
+          requests_count: service.requests_count || 0,
           completed_count: 0,
           pending_count: 0,
-          avg_duration_minutes: 45, // Valor padrão
-          satisfaction_rating: 0,
+          avg_duration_minutes: service.estimated_duration_minutes || 45,
+          satisfaction_rating: service.satisfaction_rating || 0,
+          views_count: service.views_count || 0,
           ratings: []
         }
-      }
+      })
+    }
 
-      acc[serviceType].requests_count++
+    // Depois, agregar dados de atendimentos reais aos serviços
+    if (allAttendances && allAttendances.length > 0) {
+      allAttendances.forEach((attendance: any) => {
+        const serviceType = attendance.service_type
 
-      if (attendance.status === 'CONCLUIDO') {
-        acc[serviceType].completed_count++
-      } else if (['AGENDADO', 'EM_ANDAMENTO'].includes(attendance.status)) {
-        acc[serviceType].pending_count++
-      }
+        // Se o serviço não existe na estrutura, criar uma entrada
+        if (!serviceGroups[serviceType]) {
+          serviceGroups[serviceType] = {
+            service_name: serviceType,
+            service_id: null,
+            service_description: 'Serviço baseado em atendimentos',
+            service_category: 'outros',
+            service_difficulty: 'intermediario',
+            is_featured: false,
+            requests_count: 0,
+            completed_count: 0,
+            pending_count: 0,
+            avg_duration_minutes: 45,
+            satisfaction_rating: 0,
+            views_count: 0,
+            ratings: []
+          }
+        }
 
-      if (attendance.client_satisfaction_rating) {
-        acc[serviceType].ratings.push(attendance.client_satisfaction_rating)
-      }
+        serviceGroups[serviceType].requests_count++
 
-      return acc
-    }, {})
+        if (attendance.status === 'CONCLUIDO') {
+          serviceGroups[serviceType].completed_count++
+        } else if (['AGENDADO', 'EM_ANDAMENTO'].includes(attendance.status)) {
+          serviceGroups[serviceType].pending_count++
+        }
+
+        if (attendance.client_satisfaction_rating) {
+          serviceGroups[serviceType].ratings.push(attendance.client_satisfaction_rating)
+        }
+      })
+    }
 
     // Calcular média de satisfação e converter para array
     const services = Object.values(serviceGroups).map((service: any) => {

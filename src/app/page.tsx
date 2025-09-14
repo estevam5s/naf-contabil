@@ -109,12 +109,12 @@ export default function Home() {
                 Verificar Elegibilidade
               </Button>
             </Link>
-            <Link href="/fiscal-guides">
+            <Link href="/faq">
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
                 Perguntas Frequentes
               </Button>
             </Link>
-            <Link href="/services">
+            <Link href="/about-naf">
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
                 Sobre o NAF Estácio
               </Button>
