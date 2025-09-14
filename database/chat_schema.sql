@@ -10,15 +10,18 @@ CREATE TABLE IF NOT EXISTS chat_conversations (
     status VARCHAR(50) DEFAULT 'active',
     is_online BOOLEAN DEFAULT false,
     coordinator_id UUID REFERENCES coordinator_users(id),
-    human_requested BOOLEAN DEFAULT false,
-    human_request_timestamp TIMESTAMP WITH TIME ZONE,
-    chat_accepted_by UUID REFERENCES coordinator_users(id),
-    chat_accepted_at TIMESTAMP WITH TIME ZONE,
-    chat_ended_by VARCHAR(50),
-    chat_ended_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add new columns for human chat functionality
+ALTER TABLE chat_conversations
+ADD COLUMN IF NOT EXISTS human_requested BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS human_request_timestamp TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS chat_accepted_by UUID REFERENCES coordinator_users(id),
+ADD COLUMN IF NOT EXISTS chat_accepted_at TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS chat_ended_by VARCHAR(50),
+ADD COLUMN IF NOT EXISTS chat_ended_at TIMESTAMP WITH TIME ZONE;
 
 -- Chat Messages Table
 CREATE TABLE IF NOT EXISTS chat_messages (
@@ -55,6 +58,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_conversation_timestamp ON chat_messages;
 CREATE TRIGGER trigger_update_conversation_timestamp
     AFTER INSERT ON chat_messages
     FOR EACH ROW

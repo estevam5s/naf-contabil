@@ -56,6 +56,9 @@ export default function ChatWidget() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [userId] = useState(() => `user_${generateId()}`)
   const [requestHumanAgent, setRequestHumanAgent] = useState(false)
+  const [chatStatus, setChatStatus] = useState<'ai' | 'waiting_human' | 'active_human' | 'ended'>('ai')
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [feedbackRating, setFeedbackRating] = useState(0)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -183,32 +186,8 @@ Como posso ajudar você hoje?
                          messageContent.includes('pessoa') ||
                          messageContent.includes('humano')
 
-      if (wantsHuman) {
-        setRequestHumanAgent(true)
-        const humanRequestMessage: Message = {
-          id: generateId(),
-          content: `🤝 **Solicitação de Atendimento Humano**
-
-Entendo que você gostaria de falar com um de nossos especialistas!
-
-**Opções disponíveis:**
-
-📞 **Telefone:** (48) 98461-4449
-🕒 **Horário:** Segunda a Sexta, 8h às 18h
-
-📅 **Agendamento Online:** Para um atendimento mais detalhado
-
-⏳ **Aguardar:** Um coordenador pode entrar neste chat em breve
-
-Enquanto isso, posso continuar ajudando com suas dúvidas básicas. O que você gostaria de saber?`,
-          sender_type: 'assistant',
-          sender_name: 'Assistente NAF',
-          is_ai_response: false,
-          created_at: new Date().toISOString(),
-          is_read: true
-        }
-
-        setMessages(prev => [...prev, humanRequestMessage])
+      if (wantsHuman && chatStatus === 'ai') {
+        await requestHumanSupport()
         return
       }
 
@@ -269,12 +248,152 @@ Enquanto isso, posso continuar ajudando com suas dúvidas básicas. O que você 
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
     }
   }
+
+  const requestHumanSupport = async () => {
+    if (!conversation) return
+
+    try {
+      const response = await fetch('/api/chat/human-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: conversation.id,
+          user_id: userId
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setRequestHumanAgent(true)
+        setChatStatus('waiting_human')
+
+        const humanRequestMessage: Message = {
+          id: generateId(),
+          content: `🤝 **Solicitação Enviada!**
+
+Sua solicitação de atendimento humano foi enviada aos nossos coordenadores.
+
+⏳ **Status:** Aguardando especialista
+
+📞 **Alternativas:**
+• Telefone: (48) 98461-4449
+• Horário: Segunda a Sexta, 8h às 18h
+
+Em breve um especialista entrará neste chat para ajudá-lo!`,
+          sender_type: 'assistant',
+          sender_name: 'Sistema NAF',
+          is_ai_response: false,
+          created_at: new Date().toISOString(),
+          is_read: true
+        }
+
+        setMessages(prev => [...prev, humanRequestMessage])
+      }
+    } catch (error) {
+      console.error('Erro ao solicitar atendimento humano:', error)
+    }
+  }
+
+  const submitFeedback = async (rating: number, comment?: string) => {
+    if (!conversation) return
+
+    try {
+      const response = await fetch('/api/chat/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: conversation.id,
+          user_id: userId,
+          rating,
+          feedback_text: comment,
+          coordinator_id: conversation.coordinator_id
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setShowFeedback(false)
+        // Recarregar mensagens para mostrar agradecimento
+        setTimeout(() => {
+          if (conversation) {
+            loadMessages(conversation.id)
+          }
+        }, 500)
+      }
+    } catch (error) {
+      console.error('Erro ao enviar feedback:', error)
+    }
+  }
+
+  const loadMessages = async (conversationId: string) => {
+    try {
+      const response = await fetch(`/api/chat/messages?conversation_id=${conversationId}`)
+      const data = await response.json()
+      if (data.messages) {
+        setMessages(data.messages)
+
+        // Verificar se há mensagens de coordenador
+        const hasCoordinatorMessages = data.messages.some(
+          (msg: Message) => msg.sender_type === 'coordinator'
+        )
+
+        if (hasCoordinatorMessages && chatStatus !== 'active_human' && chatStatus !== 'ended') {
+          setChatStatus('active_human')
+          setRequestHumanAgent(false)
+        }
+
+        // Verificar se o chat foi finalizado
+        const hasFinalMessage = data.messages.some(
+          (msg: Message) => msg.content.includes('Chat finalizado') || msg.content.includes('**Por favor, avalie nosso atendimento:**')
+        )
+
+        if (hasFinalMessage && chatStatus !== 'ended') {
+          setChatStatus('ended')
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar mensagens:', error)
+    }
+  }
+
+  const checkConversationStatus = async () => {
+    if (!conversation) return
+
+    try {
+      const response = await fetch(`/api/chat/conversations?user_id=${userId}`)
+      const data = await response.json()
+      if (data.conversation) {
+        const conv = data.conversation
+        if (conv.status === 'ended' && chatStatus !== 'ended') {
+          setChatStatus('ended')
+          loadMessages(conversation.id)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status da conversa:', error)
+    }
+  }
+
+  // Polling para verificar mudanças de status
+  useEffect(() => {
+    if (!conversation || chatStatus === 'ai') return
+
+    const interval = setInterval(() => {
+      checkConversationStatus()
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [conversation, chatStatus])
 
   const toggleChat = () => {
     setIsOpen(!isOpen)
@@ -434,40 +553,112 @@ Enquanto isso, posso continuar ajudando com suas dúvidas básicas. O que você 
                   <Input
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyDown}
                     placeholder="Digite sua mensagem..."
                     className="flex-1"
-                    disabled={isLoading}
+                    disabled={isLoading || chatStatus === 'ended'}
                   />
-                  <Button
-                    onClick={sendMessage}
-                    disabled={isLoading || !inputValue.trim()}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+                  {chatStatus !== 'ended' && (
+                    <Button
+                      onClick={sendMessage}
+                      disabled={isLoading || !inputValue.trim()}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <div className="flex space-x-2">
+                    {chatStatus === 'ai' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={requestHumanSupport}
+                        className="text-xs"
+                      >
+                        <User className="h-3 w-3 mr-1" />
+                        Falar com especialista
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" className="text-xs">
                       <Phone className="h-3 w-3 mr-1" />
                       (48) 98461-4449
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-xs">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      Agendar
-                    </Button>
+                    {chatStatus !== 'active_human' && (
+                      <Button variant="ghost" size="sm" className="text-xs">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Agendar
+                      </Button>
+                    )}
                   </div>
-                  {requestHumanAgent && (
-                    <Badge variant="outline" className="text-xs">
-                      Aguardando especialista
-                    </Badge>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {chatStatus === 'waiting_human' && (
+                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-600">
+                        Aguardando especialista
+                      </Badge>
+                    )}
+                    {chatStatus === 'active_human' && (
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-600">
+                        Especialista online
+                      </Badge>
+                    )}
+                    {chatStatus === 'ended' && (
+                      <Button
+                        size="sm"
+                        onClick={() => setShowFeedback(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-xs"
+                      >
+                        ⭐ Avaliar atendimento
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
           )}
         </Card>
+      )}
+
+      {/* Modal de Feedback */}
+      {showFeedback && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Avalie nosso atendimento</h3>
+            <p className="text-gray-600 mb-4">Como você avalia o atendimento recebido?</p>
+
+            <div className="flex justify-center space-x-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setFeedbackRating(star)}
+                  className={`text-2xl transition-colors ${
+                    star <= feedbackRating ? 'text-yellow-400' : 'text-gray-300'
+                  } hover:text-yellow-400`}
+                >
+                  ⭐
+                </button>
+              ))}
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowFeedback(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => submitFeedback(feedbackRating)}
+                disabled={feedbackRating === 0}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                Enviar Avaliação
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

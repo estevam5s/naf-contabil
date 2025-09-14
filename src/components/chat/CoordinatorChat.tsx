@@ -16,7 +16,12 @@ import {
   Search,
   Phone,
   RefreshCw,
-  Circle
+  Circle,
+  Check,
+  X,
+  UserCheck,
+  AlertCircle,
+  Star
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
@@ -41,6 +46,11 @@ interface Conversation {
   last_message?: Message
   updated_at: string
   messages?: Message[]
+  human_requested?: boolean
+  human_request_timestamp?: string
+  chat_accepted_by?: string
+  chat_accepted_at?: string
+  chat_ended_at?: string
 }
 
 interface CoordinatorChatProps {
@@ -56,6 +66,9 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [pendingRequests, setPendingRequests] = useState<Conversation[]>([])
+  const [activeTab, setActiveTab] = useState<'active' | 'pending'>('pending')
+  const [showFeedback, setShowFeedback] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -70,7 +83,11 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
 
   useEffect(() => {
     loadConversations()
-    const interval = setInterval(loadConversations, 5000)
+    loadPendingRequests()
+    const interval = setInterval(() => {
+      loadConversations()
+      loadPendingRequests()
+    }, 3000)
     return () => clearInterval(interval)
   }, [])
 
@@ -80,12 +97,28 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
       const response = await fetch(`/api/chat/conversations?coordinator_id=${coordinatorId}`)
       const data = await response.json()
       if (data.conversations) {
-        setConversations(data.conversations)
+        // Filtrar apenas conversas ativas (não pendentes de aprovação)
+        const activeConversations = data.conversations.filter((conv: Conversation) =>
+          conv.status !== 'waiting_human' && conv.chat_accepted_by
+        )
+        setConversations(activeConversations)
       }
     } catch (error) {
       console.error('Erro ao carregar conversas:', error)
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  const loadPendingRequests = async () => {
+    try {
+      const response = await fetch(`/api/chat/human-request?coordinator_id=${coordinatorId}`)
+      const data = await response.json()
+      if (data.pendingRequests) {
+        setPendingRequests(data.pendingRequests)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar solicitações pendentes:', error)
     }
   }
 
@@ -116,6 +149,99 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
   const selectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation)
     loadMessages(conversation.id)
+    setShowFeedback(conversation.status === 'ended')
+  }
+
+  const acceptChat = async (conversationId: string) => {
+    try {
+      const response = await fetch('/api/chat/accept-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          coordinator_id: coordinatorId,
+          coordinator_name: coordinatorName,
+          action: 'accept'
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Recarregar listas
+        loadPendingRequests()
+        loadConversations()
+        // Selecionar a conversa aceita
+        const acceptedConv = pendingRequests.find(conv => conv.id === conversationId)
+        if (acceptedConv) {
+          setSelectedConversation({ ...acceptedConv, status: 'active_human', chat_accepted_by: coordinatorId })
+          loadMessages(conversationId)
+          setActiveTab('active')
+        }
+      } else {
+        alert(data.error || 'Erro ao aceitar chat')
+      }
+    } catch (error) {
+      console.error('Erro ao aceitar chat:', error)
+      alert('Erro ao aceitar chat')
+    }
+  }
+
+  const rejectChat = async (conversationId: string) => {
+    try {
+      const response = await fetch('/api/chat/accept-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          coordinator_id: coordinatorId,
+          action: 'reject'
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        loadPendingRequests()
+        loadConversations()
+      } else {
+        alert(data.error || 'Erro ao rejeitar chat')
+      }
+    } catch (error) {
+      console.error('Erro ao rejeitar chat:', error)
+      alert('Erro ao rejeitar chat')
+    }
+  }
+
+  const endChat = async () => {
+    if (!selectedConversation) return
+
+    try {
+      const response = await fetch('/api/chat/end-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: selectedConversation.id,
+          ended_by: 'coordinator',
+          coordinator_id: coordinatorId,
+          coordinator_name: coordinatorName
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setSelectedConversation({ ...selectedConversation, status: 'ended' })
+        setShowFeedback(true)
+        loadMessages(selectedConversation.id)
+        loadConversations()
+      }
+    } catch (error) {
+      console.error('Erro ao finalizar chat:', error)
+    }
   }
 
   const sendMessage = async () => {
@@ -159,7 +285,7 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
@@ -167,6 +293,11 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
   }
 
   const filteredConversations = conversations.filter(conv =>
+    conv.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.user_email?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredPendingRequests = pendingRequests.filter(conv =>
     conv.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.user_email?.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -202,16 +333,48 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
       <div className="w-1/3 border-r flex flex-col">
         <div className="p-4 border-b bg-gray-50">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900">Conversas Ativas</h3>
+            <div className="flex items-center space-x-2">
+              <h3 className="font-semibold text-gray-900">Painel de Chat</h3>
+              {pendingRequests.length > 0 && (
+                <Badge className="bg-red-500 text-white text-xs">
+                  {pendingRequests.length}
+                </Badge>
+              )}
+            </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={loadConversations}
+              onClick={() => {
+                loadConversations()
+                loadPendingRequests()
+              }}
               disabled={refreshing}
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
+
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'active' | 'pending')} className="mb-3">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="pending" className="relative">
+                Pendentes
+                {pendingRequests.length > 0 && (
+                  <Badge className="ml-2 bg-red-500 text-white text-xs px-1 py-0 min-w-[16px] h-4">
+                    {pendingRequests.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="active" className="relative">
+                Ativas
+                {conversations.length > 0 && (
+                  <Badge className="ml-2 bg-blue-500 text-white text-xs px-1 py-0 min-w-[16px] h-4">
+                    {conversations.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -224,59 +387,132 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="p-2">
-            {filteredConversations.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nenhuma conversa ativa</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredConversations.map((conversation) => (
-                  <div
-                    key={conversation.id}
-                    onClick={() => selectConversation(conversation)}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedConversation?.id === conversation.id
-                        ? 'bg-blue-100 border-blue-200'
-                        : 'hover:bg-gray-50 border-transparent'
-                    } border`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
-                          <Circle
-                            className={`h-2 w-2 ${
-                              conversation.is_online ? 'text-green-500 fill-current' : 'text-gray-300'
-                            }`}
-                          />
-                          <span className="font-medium text-sm text-gray-900">
-                            {conversation.user_name}
+          <Tabs value={activeTab}>
+            {/* Aba de Solicitações Pendentes */}
+            <TabsContent value="pending">
+              <div className="p-2">
+                {filteredPendingRequests.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <UserCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Nenhuma solicitação pendente</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredPendingRequests.map((conversation) => (
+                      <div
+                        key={conversation.id}
+                        className="p-3 rounded-lg border border-orange-200 bg-orange-50"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <AlertCircle className="h-4 w-4 text-orange-500" />
+                            <span className="font-medium text-sm text-gray-900">
+                              {conversation.user_name}
+                            </span>
+                            <Badge variant="outline" className="text-xs bg-orange-100">
+                              Aguardando
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatTime(conversation.human_request_timestamp || conversation.updated_at)}
                           </span>
                         </div>
-                        {conversation.unread_count && conversation.unread_count > 0 && (
-                          <Badge className="bg-red-500 text-white text-xs px-1 py-0 min-w-[16px] h-4">
-                            {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
-                          </Badge>
+                        {conversation.user_email && (
+                          <p className="text-xs text-gray-500 mb-2">{conversation.user_email}</p>
+                        )}
+                        {conversation.last_message && (
+                          <p className="text-xs text-gray-600 mb-3 truncate">
+                            {conversation.last_message.content.slice(0, 60)}...
+                          </p>
+                        )}
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            onClick={() => acceptChat(conversation.id)}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            Aceitar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => rejectChat(conversation.id)}
+                            className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Rejeitar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Aba de Conversas Ativas */}
+            <TabsContent value="active">
+              <div className="p-2">
+                {filteredConversations.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Nenhuma conversa ativa</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredConversations.map((conversation) => (
+                      <div
+                        key={conversation.id}
+                        onClick={() => selectConversation(conversation)}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          selectedConversation?.id === conversation.id
+                            ? 'bg-blue-100 border-blue-200'
+                            : 'hover:bg-gray-50 border-transparent'
+                        } border`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1">
+                              <Circle
+                                className={`h-2 w-2 ${
+                                  conversation.is_online ? 'text-green-500 fill-current' : 'text-gray-300'
+                                }`}
+                              />
+                              <span className="font-medium text-sm text-gray-900">
+                                {conversation.user_name}
+                              </span>
+                            </div>
+                            {conversation.unread_count && conversation.unread_count > 0 && (
+                              <Badge className="bg-red-500 text-white text-xs px-1 py-0 min-w-[16px] h-4">
+                                {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
+                              </Badge>
+                            )}
+                            {conversation.status === 'ended' && (
+                              <Badge variant="outline" className="text-xs">
+                                Finalizada
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatTime(conversation.updated_at)}
+                          </span>
+                        </div>
+                        {conversation.user_email && (
+                          <p className="text-xs text-gray-500 mb-1">{conversation.user_email}</p>
+                        )}
+                        {conversation.last_message && (
+                          <p className="text-xs text-gray-600 truncate">
+                            {conversation.last_message.content.slice(0, 50)}...
+                          </p>
                         )}
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {formatTime(conversation.updated_at)}
-                      </span>
-                    </div>
-                    {conversation.user_email && (
-                      <p className="text-xs text-gray-500 mb-1">{conversation.user_email}</p>
-                    )}
-                    {conversation.last_message && (
-                      <p className="text-xs text-gray-600 truncate">
-                        {conversation.last_message.content.slice(0, 50)}...
-                      </p>
-                    )}
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
         </ScrollArea>
       </div>
 
@@ -309,6 +545,16 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
                   <Badge variant="outline" className="text-xs">
                     ID: {selectedConversation.user_id.slice(-8)}
                   </Badge>
+                  {selectedConversation.status === 'active_human' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={endChat}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      Finalizar Chat
+                    </Button>
+                  )}
                   <Button variant="ghost" size="sm">
                     <Phone className="h-4 w-4" />
                   </Button>
@@ -389,7 +635,7 @@ export default function CoordinatorChat({ coordinatorId, coordinatorName }: Coor
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
                   placeholder="Digite sua resposta..."
                   className="flex-1"
                   disabled={isLoading}
