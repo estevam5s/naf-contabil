@@ -9,7 +9,13 @@ CREATE TABLE IF NOT EXISTS chat_conversations (
     user_email VARCHAR(255),
     status VARCHAR(50) DEFAULT 'active',
     is_online BOOLEAN DEFAULT false,
-    coordinator_id INTEGER REFERENCES coordinators(id),
+    coordinator_id UUID REFERENCES coordinator_users(id),
+    human_requested BOOLEAN DEFAULT false,
+    human_request_timestamp TIMESTAMP WITH TIME ZONE,
+    chat_accepted_by UUID REFERENCES coordinator_users(id),
+    chat_accepted_at TIMESTAMP WITH TIME ZONE,
+    chat_ended_by VARCHAR(50),
+    chat_ended_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -53,3 +59,21 @@ CREATE TRIGGER trigger_update_conversation_timestamp
     AFTER INSERT ON chat_messages
     FOR EACH ROW
     EXECUTE FUNCTION update_conversation_timestamp();
+
+-- Chat Feedback Table
+CREATE TABLE IF NOT EXISTS chat_feedback (
+    id SERIAL PRIMARY KEY,
+    conversation_id INTEGER REFERENCES chat_conversations(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5) NOT NULL,
+    feedback_text TEXT,
+    coordinator_id UUID REFERENCES coordinator_users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Additional indexes
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_human_requested ON chat_conversations(human_requested);
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_status ON chat_conversations(status);
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_accepted_by ON chat_conversations(chat_accepted_by);
+CREATE INDEX IF NOT EXISTS idx_chat_feedback_conversation_id ON chat_feedback(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_chat_feedback_rating ON chat_feedback(rating);
