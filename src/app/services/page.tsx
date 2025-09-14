@@ -85,9 +85,9 @@ const difficultyLabels = {
 }
 
 const difficultyColors = {
-  'basico': 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400',
-  'intermediario': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400',
-  'avancado': 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
+  'basico': 'bg-green-100 text-green-700',
+  'intermediario': 'bg-yellow-100 text-yellow-700',
+  'avancado': 'bg-red-100 text-red-700'
 }
 
 export default function ServicesPage() {
@@ -168,16 +168,16 @@ export default function ServicesPage() {
 
   const getColorClass = (colorScheme?: string) => {
     const colorMap: { [key: string]: string } = {
-      blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
-      green: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
-      purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
-      orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400',
-      red: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
-      indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400',
-      yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400',
-      teal: 'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400',
-      emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400',
-      pink: 'bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400'
+      blue: 'bg-blue-100 text-blue-600',
+      green: 'bg-green-100 text-green-600',
+      purple: 'bg-purple-100 text-purple-600',
+      orange: 'bg-orange-100 text-orange-600',
+      red: 'bg-red-100 text-red-600',
+      indigo: 'bg-indigo-100 text-indigo-600',
+      yellow: 'bg-yellow-100 text-yellow-600',
+      teal: 'bg-teal-100 text-teal-600',
+      emerald: 'bg-emerald-100 text-emerald-600',
+      pink: 'bg-pink-100 text-pink-600'
     }
     return colorMap[colorScheme || 'blue'] || colorMap.blue
   }
@@ -189,20 +189,20 @@ export default function ServicesPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-white">
       <MainNavigation />
 
       <div className="container mx-auto px-4 py-8 mt-16">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Nossos Serviços
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-6 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 mb-6 max-w-3xl mx-auto">
             O NAF Estácio Florianópolis oferece orientação fiscal e contábil gratuita com
             qualidade profissional. Conheça todos os nossos serviços disponíveis.
           </p>
-          <div className="flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
               <span>Atendimento Gratuito</span>
@@ -222,40 +222,40 @@ export default function ServicesPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+              <div className="text-3xl font-bold text-blue-600 mb-2">
                 {services.length}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 text-sm">
+              <div className="text-gray-600 text-sm">
                 Serviços Disponíveis
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+              <div className="text-3xl font-bold text-green-600 mb-2">
                 {services.reduce((acc, s) => acc + s.views_count, 0).toLocaleString()}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 text-sm">
+              <div className="text-gray-600 text-sm">
                 Visualizações
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+              <div className="text-3xl font-bold text-purple-600 mb-2">
                 {services.reduce((acc, s) => acc + s.requests_count, 0).toLocaleString()}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 text-sm">
+              <div className="text-gray-600 text-sm">
                 Solicitações
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">
+              <div className="text-3xl font-bold text-orange-600 mb-2">
                 {services.length > 0 ? (services.reduce((acc, s) => acc + s.satisfaction_rating, 0) / services.length).toFixed(1) : '0.0'}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 text-sm">
+              <div className="text-gray-600 text-sm">
                 Satisfação Média
               </div>
             </CardContent>
@@ -272,8 +272,8 @@ export default function ServicesPage() {
                 placeholder="Buscar serviços..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md
-                         bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md
+                         bg-white text-gray-900
                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -281,8 +281,8 @@ export default function ServicesPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-4 py-2 border border-gray-300 rounded-md
+                       bg-white text-gray-900"
             >
               <option value="all">Todas as categorias</option>
               {Object.entries(categoryLabels).map(([value, label]) => (
@@ -293,8 +293,8 @@ export default function ServicesPage() {
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-4 py-2 border border-gray-300 rounded-md
+                       bg-white text-gray-900"
             >
               <option value="all">Todas as dificuldades</option>
               {Object.entries(difficultyLabels).map(([value, label]) => (
@@ -305,8 +305,8 @@ export default function ServicesPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-4 py-2 border border-gray-300 rounded-md
+                       bg-white text-gray-900"
             >
               <option value="priority">Relevância</option>
               <option value="name">Nome A-Z</option>
@@ -342,11 +342,11 @@ export default function ServicesPage() {
                   onChange={(e) => setShowFeaturedOnly(e.target.checked)}
                   className="rounded"
                 />
-                <label htmlFor="featured" className="text-sm text-gray-600 dark:text-gray-400">
+                <label htmlFor="featured" className="text-sm text-gray-600">
                   Apenas em destaque
                 </label>
               </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-gray-500">
                 {filteredServices.length} serviços encontrados
               </span>
             </div>
@@ -359,14 +359,14 @@ export default function ServicesPage() {
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                  <div className="h-16 bg-gray-200 rounded mb-4"></div>
                   <div className="flex gap-2">
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded w-20"></div>
                   </div>
                 </CardContent>
               </Card>
@@ -379,7 +379,7 @@ export default function ServicesPage() {
               .map((group) => (
                 <section key={group.category}>
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h2 className="text-2xl font-bold text-gray-900">
                       {group.label}
                     </h2>
                     <Badge variant="outline" className="px-3 py-1">
@@ -405,11 +405,11 @@ export default function ServicesPage() {
                                 <div className="flex-1">
                                   <div className="flex items-start justify-between mb-2">
                                     <div>
-                                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
                                         {service.name}
                                         {service.is_featured && <Star className="inline h-4 w-4 text-yellow-500 ml-2" />}
                                       </h3>
-                                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
+                                      <p className="text-gray-600 text-sm mb-3">
                                         {service.description}
                                       </p>
                                     </div>
@@ -428,7 +428,7 @@ export default function ServicesPage() {
                                       )}
                                     </div>
 
-                                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                    <div className="flex items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
                                         <Eye className="h-3 w-3" />
                                         <span>{service.views_count}</span>
@@ -467,11 +467,11 @@ export default function ServicesPage() {
                                   <IconComponent className="h-5 w-5" />
                                 </div>
                                 <div>
-                                  <CardTitle className="text-lg dark:text-white">
+                                  <CardTitle className="text-lg">
                                     {service.name}
                                     {service.is_featured && <Star className="inline h-4 w-4 text-yellow-500 ml-2" />}
                                   </CardTitle>
-                                  <CardDescription className="dark:text-gray-400">
+                                  <CardDescription className="">
                                     {service.subcategory || group.label}
                                   </CardDescription>
                                 </div>
@@ -480,7 +480,7 @@ export default function ServicesPage() {
                           </CardHeader>
 
                           <CardContent>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                            <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                               {service.description}
                             </p>
 
@@ -502,7 +502,7 @@ export default function ServicesPage() {
                               )}
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                            <div className="grid grid-cols-3 gap-4 mb-4 text-xs text-gray-500">
                               <div className="text-center">
                                 <Eye className="h-4 w-4 mx-auto mb-1" />
                                 <span>{service.views_count}</span>
@@ -544,10 +544,10 @@ export default function ServicesPage() {
         {!loading && filteredServices.length === 0 && (
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Nenhum serviço encontrado
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-600 mb-4">
               Tente ajustar os filtros de busca ou navegar pelas categorias.
             </p>
             <Button onClick={() => {

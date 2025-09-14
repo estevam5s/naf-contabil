@@ -103,16 +103,16 @@ export default function NAFServicesShowcase() {
 
   const getColorClass = (colorScheme?: string) => {
     const colorMap: { [key: string]: string } = {
-      blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
-      green: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
-      purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
-      orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400',
-      red: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
-      indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400',
-      yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400',
-      teal: 'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400',
-      emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400',
-      pink: 'bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400'
+      blue: 'bg-blue-100 text-blue-600',
+      green: 'bg-green-100 text-green-600',
+      purple: 'bg-purple-100 text-purple-600',
+      orange: 'bg-orange-100 text-orange-600',
+      red: 'bg-red-100 text-red-600',
+      indigo: 'bg-indigo-100 text-indigo-600',
+      yellow: 'bg-yellow-100 text-yellow-600',
+      teal: 'bg-teal-100 text-teal-600',
+      emerald: 'bg-emerald-100 text-emerald-600',
+      pink: 'bg-pink-100 text-pink-600'
     }
     return colorMap[colorScheme || 'blue'] || colorMap.blue
   }
@@ -150,7 +150,7 @@ export default function NAFServicesShowcase() {
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   {service.status === 'ativo' && (
-                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400">
+                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
                       Disponível
                     </Badge>
                   )}
@@ -161,14 +161,14 @@ export default function NAFServicesShowcase() {
                   )}
                 </div>
               </div>
-              <CardTitle className="text-lg dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
                 {service.name}
               </CardTitle>
-              <CardDescription className="line-clamp-2 dark:text-gray-300">
+              <CardDescription className="line-clamp-2">
                 {service.description}
               </CardDescription>
 
-              <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
                 <span className="capitalize">
                   {difficultyLabels[service.difficulty]}
                 </span>

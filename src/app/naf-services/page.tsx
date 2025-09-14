@@ -138,32 +138,32 @@ export default function NAFServicesAdmin() {
 
   const getColorClass = (colorScheme?: string) => {
     const colorMap: { [key: string]: string } = {
-      blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
-      green: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
-      purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
-      orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400',
-      red: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
-      indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400',
-      yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400',
-      teal: 'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400',
-      emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400',
-      pink: 'bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400'
+      blue: 'bg-blue-100 text-blue-600',
+      green: 'bg-green-100 text-green-600',
+      purple: 'bg-purple-100 text-purple-600',
+      orange: 'bg-orange-100 text-orange-600',
+      red: 'bg-red-100 text-red-600',
+      indigo: 'bg-indigo-100 text-indigo-600',
+      yellow: 'bg-yellow-100 text-yellow-600',
+      teal: 'bg-teal-100 text-teal-600',
+      emerald: 'bg-emerald-100 text-emerald-600',
+      pink: 'bg-pink-100 text-pink-600'
     }
     return colorMap[colorScheme || 'blue'] || colorMap.blue
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-white">
       <MainNavigation />
 
       <div className="container mx-auto px-4 py-8 mt-16">
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Gerenciamento de Serviços NAF
               </h1>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600">
                 Administre todos os serviços oferecidos pelo Núcleo de Apoio Fiscal
               </p>
             </div>
@@ -182,8 +182,8 @@ export default function NAFServicesAdmin() {
               placeholder="Buscar serviços..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md
+                       bg-white text-gray-900
                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -191,8 +191,8 @@ export default function NAFServicesAdmin() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="px-4 py-2 border border-gray-300 rounded-md
+                     bg-white text-gray-900"
           >
             <option value="all">Todas as categorias</option>
             {Object.entries(categoryLabels).map(([value, label]) => (
@@ -203,8 +203,8 @@ export default function NAFServicesAdmin() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="px-4 py-2 border border-gray-300 rounded-md
+                     bg-white text-gray-900"
           >
             <option value="all">Todos os status</option>
             {Object.entries(statusLabels).map(([value, label]) => (
@@ -214,7 +214,7 @@ export default function NAFServicesAdmin() {
 
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-gray-600">
               {filteredServices.length} serviços
             </span>
           </div>
@@ -225,14 +225,14 @@ export default function NAFServicesAdmin() {
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                  <div className="h-16 bg-gray-200 rounded mb-4"></div>
                   <div className="flex gap-2">
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded w-20"></div>
                   </div>
                 </CardContent>
               </Card>
@@ -251,11 +251,11 @@ export default function NAFServicesAdmin() {
                           <IconComponent className="h-5 w-5" />
                         </div>
                         <div>
-                          <CardTitle className="text-lg dark:text-white">
+                          <CardTitle className="text-lg">
                             {service.name}
                             {service.is_featured && <Star className="inline h-4 w-4 text-yellow-500 ml-2" />}
                           </CardTitle>
-                          <CardDescription className="dark:text-gray-400">
+                          <CardDescription className="">
                             {categoryLabels[service.category as keyof typeof categoryLabels]}
                           </CardDescription>
                         </div>
@@ -264,7 +264,7 @@ export default function NAFServicesAdmin() {
                   </CardHeader>
 
                   <CardContent>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                       {service.description}
                     </p>
 
@@ -286,7 +286,7 @@ export default function NAFServicesAdmin() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="grid grid-cols-3 gap-4 mb-4 text-xs text-gray-500">
                       <div className="text-center">
                         <Eye className="h-4 w-4 mx-auto mb-1" />
                         <span>{service.views_count}</span>
@@ -324,10 +324,10 @@ export default function NAFServicesAdmin() {
         {!loading && filteredServices.length === 0 && (
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Nenhum serviço encontrado
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600">
               Tente ajustar os filtros ou criar um novo serviço.
             </p>
           </div>

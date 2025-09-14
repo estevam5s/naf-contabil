@@ -35,13 +35,13 @@ export default function ScrollToTop() {
     <button
       onClick={scrollToTop}
       className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50
-                 bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700
+                 bg-blue-600 hover:bg-blue-700
                  text-white p-4 rounded-full shadow-lg hover:shadow-xl
                  transition-all duration-300 ease-in-out
                  hover:scale-110 active:scale-95
-                 border-2 border-blue-500 dark:border-purple-500
+                 border-2 border-blue-500
                  animate-pulse hover:animate-none
-                 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90"
+                 backdrop-blur-sm bg-opacity-90"
       aria-label="Voltar ao topo"
       title="Voltar ao topo"
     >

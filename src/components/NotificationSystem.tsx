@@ -125,9 +125,9 @@ export default function NotificationSystem({ className }: NotificationSystemProp
       {/* Bell Icon with Badge */}
       <button
         onClick={() => setShowNotifications(!showNotifications)}
-        className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
       >
-        <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+        <Bell className="h-6 w-6 text-gray-600" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -137,21 +137,21 @@ export default function NotificationSystem({ className }: NotificationSystemProp
 
       {/* Notifications Panel */}
       {showNotifications && (
-        <div className="absolute right-0 top-12 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 max-h-96 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="absolute right-0 top-12 w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-96 overflow-hidden">
+          <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
+              <h3 className="font-semibold text-gray-900">
                 Notificações
               </h3>
               <button
                 onClick={() => setShowNotifications(false)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="text-gray-500 hover:text-gray-700"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             {unreadCount > 0 && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-600 mt-1">
                 {unreadCount} não lida{unreadCount !== 1 ? 's' : ''}
               </p>
             )}
@@ -159,7 +159,7 @@ export default function NotificationSystem({ className }: NotificationSystemProp
 
           <div className="overflow-y-auto max-h-80">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+              <div className="p-8 text-center text-gray-500">
                 <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>Nenhuma notificação</p>
               </div>
@@ -167,8 +167,8 @@ export default function NotificationSystem({ className }: NotificationSystemProp
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                    !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                  className={`p-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors ${
+                    !notification.read ? 'bg-blue-50' : ''
                   }`}
                   onClick={() => markAsRead(notification.id)}
                 >
@@ -177,17 +177,17 @@ export default function NotificationSystem({ className }: NotificationSystemProp
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <p className={`text-sm font-medium ${
-                          !notification.read 
-                            ? 'text-gray-900 dark:text-white' 
-                            : 'text-gray-600 dark:text-gray-300'
+                          !notification.read
+                            ? 'text-gray-900'
+                            : 'text-gray-600'
                         }`}>
                           {notification.title}
                         </p>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-gray-500">
                           {formatTime(notification.timestamp)}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-gray-600 mt-1">
                         {notification.message}
                       </p>
                       <div className="flex items-center justify-between mt-2">
@@ -197,7 +197,7 @@ export default function NotificationSystem({ className }: NotificationSystemProp
                               e.stopPropagation()
                               notification.action!.callback()
                             }}
-                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                           >
                             {notification.action.label}
                           </button>
@@ -207,7 +207,7 @@ export default function NotificationSystem({ className }: NotificationSystemProp
                             e.stopPropagation()
                             removeNotification(notification.id)
                           }}
-                          className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 ml-auto"
+                          className="text-xs text-gray-500 hover:text-gray-700 ml-auto"
                         >
                           Remover
                         </button>
@@ -220,10 +220,10 @@ export default function NotificationSystem({ className }: NotificationSystemProp
           </div>
 
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-3 border-t border-gray-200">
               <button
                 onClick={() => setNotifications([])}
-                className="w-full text-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                className="w-full text-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
               >
                 Limpar todas
               </button>
