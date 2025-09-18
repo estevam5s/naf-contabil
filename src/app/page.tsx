@@ -183,7 +183,7 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-4 gap-6">
-            <Link href="/student-portal">
+            <Link href="/student-login-simple">
               <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
                 <CardContent className="p-6 text-center">
                   <UserCheck className="h-12 w-12 text-white mx-auto mb-4" />
@@ -391,7 +391,7 @@ export default function Home() {
                 Acesso Rápido
               </h3>
               <div className="space-y-3">
-                <Link href="/student-portal" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">
+                <Link href="/student-login-simple" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">
                   <span className="group-hover:translate-x-1 inline-block transition-transform">→ Portal do Estudante</span>
                 </Link>
                 <Link href="/coordinator-dashboard" className="block text-gray-300 hover:text-green-400 text-sm transition-colors group">

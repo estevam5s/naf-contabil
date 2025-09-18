@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,16 +15,15 @@ async function verifyStudentToken(token: string): Promise<any> {
       return null
     }
 
-    // Verificar se a sessão existe no banco e não expirou
-    const { data: session, error } = await supabase
-      .from('student_sessions')
-      .select('*')
-      .eq('token', token)
-      .eq('student_id', decoded.studentId)
-      .gte('expires_at', new Date().toISOString())
+    // Verificar se o estudante ainda existe e está ativo
+    const { data: student, error } = await supabaseAdmin
+      .from('students')
+      .select('id, status')
+      .eq('id', decoded.studentId)
+      .eq('status', 'ATIVO')
       .single()
 
-    if (error || !session) {
+    if (error || !student) {
       return null
     }
 
@@ -55,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar dados do estudante
-    const { data: student, error: studentError } = await supabase
+    const { data: student, error: studentError } = await supabaseAdmin
       .from('students')
       .select('*')
       .eq('id', studentAuth.studentId)
@@ -69,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar atendimentos do estudante
-    const { data: attendances, error: attendancesError } = await supabase
+    const { data: attendances, error: attendancesError } = await supabaseAdmin
       .from('attendances')
       .select('*')
       .eq('student_id', student.id)
@@ -81,7 +80,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar progresso em treinamentos
-    const { data: trainingProgress, error: trainingError } = await supabase
+    const { data: trainingProgress, error: trainingError } = await supabaseAdmin
       .from('student_training_progress')
       .select(`
         *,
@@ -94,7 +93,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar todos os treinamentos disponíveis para calcular estatísticas
-    const { data: allTrainings, error: allTrainingsError } = await supabase
+    const { data: allTrainings, error: allTrainingsError } = await supabaseAdmin
       .from('trainings')
       .select('id')
       .eq('is_active', true)

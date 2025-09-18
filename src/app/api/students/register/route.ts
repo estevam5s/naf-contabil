@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se email já existe
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUser, error: checkError } = await supabaseAdmin
       .from('students')
       .select('id')
       .eq('email', data.email)
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se CPF já existe (se fornecido)
     if (data.document) {
-      const { data: existingCPF } = await supabase
+      const { data: existingCPF } = await supabaseAdmin
         .from('students')
         .select('id')
         .eq('document', data.document.replace(/\D/g, ''))
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se matrícula já existe
     if (data.registrationNumber) {
-      const { data: existingReg } = await supabase
+      const { data: existingReg } = await supabaseAdmin
         .from('students')
         .select('id')
         .eq('registration_number', data.registrationNumber)
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Inserir estudante no banco
-    const { data: newStudent, error: insertError } = await supabase
+    const { data: newStudent, error: insertError } = await supabaseAdmin
       .from('students')
       .insert(studentData)
       .select('id, email, name, course, semester, status')
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Inserir registro na tabela student_performance
-    await supabase
+    await supabaseAdmin
       .from('student_performance')
       .insert({
         student_name: newStudent.name,
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       })
 
     // Log da atividade
-    await supabase
+    await supabaseAdmin
       .from('student_activity_logs')
       .insert({
         student_id: newStudent.id,

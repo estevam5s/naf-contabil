@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
+
+// Mock student data for testing
+const mockStudents = [
+  {
+    id: '1',
+    email: 'ana.santos@estudante.edu.br',
+    password: '123456',
+    name: 'Ana Carolina Santos',
+    phone: '(11) 99999-0001',
+    course: 'Ciências Contábeis',
+    semester: '6º Semestre',
+    registration_number: '2024001001',
+    specializations: ['Imposto de Renda', 'MEI', 'Pessoa Física'],
+    status: 'ATIVO'
+  },
+  {
+    id: '2',
+    email: 'joao.silva@estudante.edu.br',
+    password: '123456',
+    name: 'João Silva',
+    phone: '(11) 99999-0002',
+    course: 'Administração',
+    semester: '4º Semestre',
+    registration_number: '2024001002',
+    specializations: ['MEI', 'Consultoria Empresarial'],
+    status: 'ATIVO'
+  }
+]
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,46 +42,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Buscar estudante no Supabase
-    const { data: student, error } = await supabaseAdmin
-      .from('students')
-      .select('*')
-      .eq('email', email.toLowerCase())
-      .eq('status', 'ATIVO')
-      .single()
+    // Find student
+    const student = mockStudents.find(s =>
+      s.email.toLowerCase() === email.toLowerCase() &&
+      s.password === password
+    )
 
-    if (error || !student) {
+    if (!student) {
       return NextResponse.json(
         { message: 'Credenciais inválidas' },
         { status: 401 }
       )
     }
 
-    // Verificar senha
-    const isValidPassword = await bcrypt.compare(password, student.password_hash)
-
-    if (!isValidPassword) {
-      // Log da tentativa de login falhada
-      await supabaseAdmin
-        .from('student_activity_logs')
-        .insert({
-          student_id: student.id,
-          activity_type: 'LOGIN_FAILED',
-          activity_data: {
-            reason: 'Senha inválida',
-            attempted_email: email
-          },
-          ip_address: request.headers.get('x-forwarded-for') || '127.0.0.1',
-          user_agent: request.headers.get('user-agent') || ''
-        })
-
-      return NextResponse.json(
-        { message: 'Credenciais inválidas' },
-        { status: 401 }
-      )
-    }
-
-    // Gerar token JWT
+    // Generate JWT token
     const token = jwt.sign(
       {
         studentId: student.id,
@@ -65,12 +65,6 @@ export async function POST(request: NextRequest) {
       process.env.NEXTAUTH_SECRET || 'your-secret-key',
       { expiresIn: '8h' }
     )
-
-    // Atualizar último login
-    await supabaseAdmin
-      .from('students')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', student.id)
 
     return NextResponse.json({
       message: 'Login realizado com sucesso',
@@ -84,8 +78,7 @@ export async function POST(request: NextRequest) {
         phone: student.phone,
         registrationNumber: student.registration_number,
         specializations: student.specializations,
-        status: student.status,
-        lastLogin: student.last_login
+        status: student.status
       }
     })
 

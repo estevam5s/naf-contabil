@@ -119,7 +119,7 @@ export default function StudentPortal() {
         setUser(JSON.parse(userData))
 
         // Buscar dados do dashboard
-        const response = await fetch('/api/students/dashboard', {
+        const response = await fetch('/api/students/simple-dashboard', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
