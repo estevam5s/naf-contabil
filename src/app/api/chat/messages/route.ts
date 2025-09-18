@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: messages, error } = await supabase
+    const { data: messages, error } = await supabaseAdmin
       .from('chat_messages')
       .select('*')
       .eq('conversation_id', conversationId)
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Inserir mensagem
-    const { data: message, error: messageError } = await supabase
+    const { data: message, error: messageError } = await supabaseAdmin
       .from('chat_messages')
       .insert({
         conversation_id,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     if (messageError) throw messageError
 
     // Atualizar timestamp da conversa
-    await supabase
+    await supabaseAdmin
       .from('chat_conversations')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', conversation_id)
@@ -99,7 +99,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('chat_messages')
       .update({ is_read: true })
       .eq('conversation_id', conversation_id)

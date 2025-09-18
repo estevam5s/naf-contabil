@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Finalizar o chat
-    const { data: conversation, error } = await supabase
+    const { data: conversation, error } = await supabaseAdmin
       .from('chat_conversations')
       .update({
         status: 'ended',
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       endMessage = '👋 **Chat finalizado pelo cliente**\n\nObrigado por usar nossos serviços!\n\n**Por favor, avalie nosso atendimento:**'
     }
 
-    const { error: msgError } = await supabase
+    const { error: msgError } = await supabaseAdmin
       .from('chat_messages')
       .insert({
         conversation_id,

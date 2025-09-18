@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     if (coordinatorId) {
       // Coordenador buscando todas as conversas
-      const { data: conversations, error } = await supabase
+      const { data: conversations, error } = await supabaseAdmin
         .from('chat_conversations')
         .select(`
           *,
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     if (userId) {
       // Usuário buscando sua conversa
-      const { data: conversation, error } = await supabase
+      const { data: conversation, error } = await supabaseAdmin
         .from('chat_conversations')
         .select(`
           *,
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se já existe uma conversa para este usuário
-    const { data: existingConv } = await supabase
+    const { data: existingConv } = await supabaseAdmin
       .from('chat_conversations')
       .select('*')
       .eq('user_id', user_id)
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar nova conversa
-    const { data: conversation, error } = await supabase
+    const { data: conversation, error } = await supabaseAdmin
       .from('chat_conversations')
       .insert({
         user_id,

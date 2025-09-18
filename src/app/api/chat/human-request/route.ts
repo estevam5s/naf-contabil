@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Atualizar conversa para marcar que foi solicitado atendimento humano
-    const { data: conversation, error } = await supabase
+    const { data: conversation, error } = await supabaseAdmin
       .from('chat_conversations')
       .update({
         human_requested: true,
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     if (error) throw error
 
     // Adicionar mensagem do sistema informando que a solicitação foi feita
-    const { error: msgError } = await supabase
+    const { error: msgError } = await supabaseAdmin
       .from('chat_messages')
       .insert({
         conversation_id,
