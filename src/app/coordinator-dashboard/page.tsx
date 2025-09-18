@@ -113,26 +113,15 @@ export default function CoordinatorDashboard() {
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
-  // Verificar autenticação e carregar dados
+  // Carregar dados do dashboard
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('coordinator_token')
-      const userData = localStorage.getItem('coordinator_user')
-
-      if (!token || !userData) {
-        router.push('/coordinator-login')
-        return
-      }
-
+    const loadData = async () => {
       try {
-        setUser(JSON.parse(userData))
+        // Configurar usuário mock para demonstração
+        setUser({ email: 'coordenador@naf.edu.br', name: 'Coordenador NAF' })
 
         // Buscar dados do dashboard
-        const response = await fetch('/api/coordinator/dashboard/stats', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        const response = await fetch('/api/coordinator/simple-dashboard')
 
         if (response.ok) {
           const data = await response.json()
@@ -147,8 +136,8 @@ export default function CoordinatorDashboard() {
       }
     }
 
-    checkAuth()
-  }, [router])
+    loadData()
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('coordinator_token')
