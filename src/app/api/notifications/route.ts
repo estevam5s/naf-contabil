@@ -1,145 +1,165 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+export const dynamic = 'force-dynamic'
 
-// GET - Buscar notificações do usuário
+// GET - Buscar notificações para um coordenador
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const userType = searchParams.get('userType')
-    const status = searchParams.get('status') // unread, read, all
+    const coordinatorId = searchParams.get('coordinator_id')
     const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = parseInt(searchParams.get('offset') || '0')
 
-    if (!userId || !userType) {
-      return NextResponse.json({
-        error: 'userId e userType são obrigatórios'
-      }, { status: 400 })
+    if (!coordinatorId) {
+      return NextResponse.json(
+        { error: 'coordinator_id é obrigatório' },
+        { status: 400 }
+      )
     }
 
-    let query = supabase
-      .from('notifications')
-      .select('*')
-      .eq('recipient_id', userId)
-      .eq('recipient_type', userType)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+    // Buscar notificações recentes
+    const notifications = []
 
-    // Filtrar por status se especificado
-    if (status && status !== 'all') {
-      query = query.eq('status', status)
+    try {
+      // 1. Novas solicitações de chat pendentes
+      const { data: pendingChats } = await supabaseAdmin
+        .from('chat_conversations')
+        .select('id, user_name, user_email, human_request_timestamp, created_at')
+        .eq('human_requested', true)
+        .is('chat_accepted_by', null)
+        .eq('status', 'waiting_human')
+        .order('human_request_timestamp', { ascending: false })
+        .limit(10)
+
+      if (pendingChats) {
+        pendingChats.forEach(chat => {
+          notifications.push({
+            id: `chat_request_${chat.id}`,
+            type: 'chat_request',
+            title: 'Nova solicitação de chat',
+            message: `${chat.user_name || 'Cliente'} está aguardando atendimento`,
+            timestamp: chat.human_request_timestamp || chat.created_at,
+            urgency: getUrgencyLevel(chat.human_request_timestamp || chat.created_at),
+            data: {
+              conversation_id: chat.id,
+              user_name: chat.user_name,
+              user_email: chat.user_email
+            }
+          })
+        })
+      }
+
+      // 2. Mensagens não lidas em chats ativos do coordenador
+      const { data: activeChats } = await supabaseAdmin
+        .from('chat_conversations')
+        .select(`
+          id, user_name, user_email,
+          messages:chat_messages(id, content, created_at, sender_type, is_read)
+        `)
+        .eq('coordinator_id', coordinatorId)
+        .eq('status', 'active_human')
+        .order('updated_at', { ascending: false })
+        .limit(5)
+
+      if (activeChats) {
+        activeChats.forEach(chat => {
+          const unreadMessages = chat.messages?.filter(
+            msg => msg.sender_type === 'user' && !msg.is_read
+          ) || []
+
+          if (unreadMessages.length > 0) {
+            const lastMessage = unreadMessages[unreadMessages.length - 1]
+            notifications.push({
+              id: `unread_messages_${chat.id}`,
+              type: 'unread_messages',
+              title: 'Mensagens não lidas',
+              message: `${unreadMessages.length} mensagem(ns) de ${chat.user_name || 'Cliente'}`,
+              timestamp: lastMessage.created_at,
+              urgency: 'medium',
+              data: {
+                conversation_id: chat.id,
+                user_name: chat.user_name,
+                unread_count: unreadMessages.length,
+                last_message: lastMessage.content.substring(0, 50) + '...'
+              }
+            })
+          }
+        })
+      }
+
+    } catch (supabaseError) {
+      console.error('Erro ao buscar dados do Supabase:', supabaseError)
+      // Retorna array vazio se houver erro - sem fallback mock
     }
 
-    // Filtrar notificações não expiradas
-    query = query.or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
-
-    const { data: notifications, error } = await query
-
-    if (error) {
-      console.error('Error fetching notifications:', error)
-      return NextResponse.json({
-        error: 'Erro ao buscar notificações'
-      }, { status: 500 })
-    }
-
-    // Buscar contagem total para paginação
-    const { count } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('recipient_id', userId)
-      .eq('recipient_type', userType)
-      .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+    // Ordenar por timestamp e limitar
+    notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    const limitedNotifications = notifications.slice(0, limit)
 
     return NextResponse.json({
-      notifications: notifications || [],
-      pagination: {
-        total: count || 0,
-        limit,
-        offset,
-        hasMore: (count || 0) > offset + limit
-      }
+      notifications: limitedNotifications,
+      total: notifications.length,
+      unread_count: limitedNotifications.filter(n => n.urgency === 'high').length
     })
 
   } catch (error) {
-    console.error('Error in notifications GET:', error)
-    return NextResponse.json({
-      error: 'Erro interno do servidor'
-    }, { status: 500 })
+    console.error('Erro ao buscar notificações:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
   }
 }
 
-// POST - Criar nova notificação
+// POST - Marcar notificação como lida
 export async function POST(request: NextRequest) {
   try {
-    const {
-      recipientId,
-      recipientType,
-      title,
-      message,
-      notificationType,
-      priority = 'medium',
-      icon,
-      color,
-      actionUrl,
-      actionLabel,
-      metadata = {},
-      sendEmail = false,
-      isPersistent = false,
-      expiresHours
-    } = await request.json()
+    const { notification_id, coordinator_id } = await request.json()
 
-    if (!recipientId || !recipientType || !title || !message || !notificationType) {
-      return NextResponse.json({
-        error: 'Campos obrigatórios: recipientId, recipientType, title, message, notificationType'
-      }, { status: 400 })
+    if (!notification_id || !coordinator_id) {
+      return NextResponse.json(
+        { error: 'notification_id e coordinator_id são obrigatórios' },
+        { status: 400 }
+      )
     }
 
-    const expiresAt = expiresHours
-      ? new Date(Date.now() + expiresHours * 60 * 60 * 1000).toISOString()
-      : null
+    // Para notificações de mensagens, marcar mensagens como lidas
+    if (notification_id.startsWith('unread_messages_')) {
+      const conversationId = notification_id.replace('unread_messages_', '')
 
-    const { data, error } = await supabase
-      .from('notifications')
-      .insert({
-        recipient_id: recipientId,
-        recipient_type: recipientType,
-        title,
-        message,
-        notification_type: notificationType,
-        priority,
-        icon,
-        color,
-        action_url: actionUrl,
-        action_label: actionLabel,
-        metadata,
-        send_email: sendEmail,
-        is_persistent: isPersistent,
-        expires_at: expiresAt
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating notification:', error)
-      return NextResponse.json({
-        error: 'Erro ao criar notificação'
-      }, { status: 500 })
+      try {
+        await supabaseAdmin
+          .from('chat_messages')
+          .update({ is_read: true })
+          .eq('conversation_id', conversationId)
+          .eq('sender_type', 'user')
+          .eq('is_read', false)
+      } catch (error) {
+        console.error('Erro ao marcar mensagens como lidas:', error)
+      }
     }
 
     return NextResponse.json({
-      message: 'Notificação criada com sucesso',
-      notification: data
-    }, { status: 201 })
+      success: true,
+      message: 'Notificação marcada como lida'
+    })
 
   } catch (error) {
-    console.error('Error in notifications POST:', error)
-    return NextResponse.json({
-      error: 'Erro interno do servidor'
-    }, { status: 500 })
+    console.error('Erro ao marcar notificação:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
   }
+}
+
+// Função para determinar urgência baseada no tempo
+function getUrgencyLevel(timestamp: string): string {
+  const now = new Date()
+  const time = new Date(timestamp)
+  const diffMinutes = (now.getTime() - time.getTime()) / (1000 * 60)
+
+  if (diffMinutes > 15) return 'high'
+  if (diffMinutes > 5) return 'medium'
+  return 'low'
 }

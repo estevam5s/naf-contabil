@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     const coordinatorId = searchParams.get('coordinator_id')
 
     // Buscar conversas com solicitação de atendimento humano pendente
-    let query = supabase
+    let query = supabaseAdmin
       .from('chat_conversations')
       .select(`
         *,

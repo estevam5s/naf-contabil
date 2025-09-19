@@ -17,7 +17,6 @@ import {
   Phone,
   Calendar
 } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
 
 // Função para gerar UUID simples
 const generateId = () => {
@@ -178,20 +177,28 @@ Como posso ajudar você hoje?
         })
       })
 
-      // Se solicitou agente humano, marcar flag
-      const messageContent = inputValue.toLowerCase()
-      const wantsHuman = messageContent.includes('falar com') ||
-                         messageContent.includes('agente') ||
-                         messageContent.includes('atendente') ||
-                         messageContent.includes('pessoa') ||
-                         messageContent.includes('humano')
-
-      if (wantsHuman && chatStatus === 'ai') {
-        await requestHumanSupport()
+      // Verificar status da conversa para determinar se deve responder com IA
+      if (chatStatus === 'active_human' || chatStatus === 'ended') {
+        // Se o chat está com humano ou finalizado, não buscar resposta da IA
         return
       }
 
-      // Buscar resposta da IA
+      // Se solicitou agente humano apenas em modo AI, marcar flag
+      if (chatStatus === 'ai') {
+        const messageContent = inputValue.toLowerCase()
+        const wantsHuman = messageContent.includes('falar com') ||
+                           messageContent.includes('agente') ||
+                           messageContent.includes('atendente') ||
+                           messageContent.includes('pessoa') ||
+                           messageContent.includes('humano')
+
+        if (wantsHuman) {
+          await requestHumanSupport()
+          return
+        }
+      }
+
+      // Buscar resposta da IA apenas se ainda estiver em modo AI
       const aiResponse = await fetch('/api/chat/ai', {
         method: 'POST',
         headers: {
@@ -381,9 +388,22 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
       const data = await response.json()
       if (data.conversation) {
         const conv = data.conversation
+
+        // Atualizar status baseado no status da conversa
         if (conv.status === 'ended' && chatStatus !== 'ended') {
           setChatStatus('ended')
+        } else if (conv.status === 'active_human' && chatStatus !== 'active_human') {
+          setChatStatus('active_human')
+          setRequestHumanAgent(false)
+        } else if (conv.chat_accepted_by && conv.coordinator_id && chatStatus !== 'active_human') {
+          // Se foi aceito por um coordenador, considerar como ativo mesmo que status não esteja atualizado
+          setChatStatus('active_human')
+          setRequestHumanAgent(false)
+        } else if (conv.status === 'waiting_human' && chatStatus !== 'waiting_human' && !conv.chat_accepted_by) {
+          // Só mostrar como waiting se realmente não foi aceito por ninguém
+          setChatStatus('waiting_human')
         }
+
         // Sempre carrega mensagens para pegar novas mensagens do coordenador
         loadMessages(conversation.id)
       }
@@ -449,8 +469,8 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className={`w-96 h-96 shadow-2xl transition-all duration-300 ${
-          isMinimized ? 'h-14' : 'h-96'
+        <Card className={`w-[450px] max-w-[95vw] h-[600px] max-h-[80vh] shadow-2xl transition-all duration-300 ${
+          isMinimized ? 'h-14' : 'h-[600px] max-h-[80vh]'
         }`}>
           <CardHeader className="p-4 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-t-lg">
             <div className="flex items-center justify-between">
@@ -487,7 +507,7 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
           </CardHeader>
 
           {!isMinimized && (
-            <CardContent className="p-0 flex flex-col h-80">
+            <CardContent className="p-0 flex flex-col h-[520px] max-h-[calc(80vh-80px)]">
               <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
                 <div className="space-y-4">
                   {messages.map((message) => (
@@ -498,7 +518,7 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
                       }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-3 ${
+                        className={`max-w-[85%] rounded-lg p-3 ${
                           message.sender_type === 'user'
                             ? 'bg-blue-600 text-white'
                             : message.sender_type === 'coordinator'
@@ -523,21 +543,8 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
                             </Badge>
                           )}
                         </div>
-                        <div className="text-sm">
-                          <ReactMarkdown
-                            components={{
-                              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                              ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-2">{children}</ul>,
-                              ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-2">{children}</ol>,
-                              strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                              em: ({ children }) => <em className="italic">{children}</em>,
-                              code: ({ children }) => <code className="bg-black/10 px-1 py-0.5 rounded text-xs">{children}</code>,
-                              h3: ({ children }) => <h3 className="font-semibold mb-1">{children}</h3>,
-                              hr: () => <hr className="my-2 border-current/20" />
-                            }}
-                          >
-                            {message.content}
-                          </ReactMarkdown>
+                        <div className="text-sm whitespace-pre-wrap">
+                          {message.content}
                         </div>
                         <div className="text-xs opacity-50 mt-1">
                           {new Date(message.created_at).toLocaleTimeString('pt-BR', {
@@ -550,7 +557,7 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
                   ))}
                   {isLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
+                      <div className="bg-gray-100 rounded-lg p-3 max-w-[85%]">
                         <div className="flex items-center space-x-2">
                           <RefreshCw className="h-3 w-3 animate-spin text-blue-600" />
                           <span className="text-sm text-gray-600">Digitando...</span>

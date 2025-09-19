@@ -27,7 +27,8 @@ import {
   MessageCircle
 } from 'lucide-react'
 import Link from 'next/link'
-import CoordinatorChat from '@/components/chat/CoordinatorChat'
+import CoordinatorInterface from '@/components/chat/CoordinatorInterface'
+import NotificationCenter from '@/components/NotificationCenter'
 
 interface MetricData {
   period: string
@@ -267,6 +268,7 @@ export default function CoordinatorDashboard() {
                 <option value="quarter">Este Trimestre</option>
                 <option value="year">Este Ano</option>
               </select>
+              <NotificationCenter coordinatorId={user?.id || 'coordinator'} />
               <Button onClick={() => exportReport('geral')}>
                 <Download className="h-4 w-4 mr-2" />
                 Exportar Relatório
@@ -784,18 +786,18 @@ export default function CoordinatorDashboard() {
           </TabsContent>
 
           <TabsContent value="chat" className="space-y-6">
-            <Card>
+            <Card className="min-h-[700px]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
                   Central de Atendimento via Chat
                 </CardTitle>
                 <CardDescription>
-                  Responda às dúvidas dos clientes em tempo real. As mensagens não lidas aparecem com destaque.
+                  À esquerda: solicitações pendentes para aprovar. À direita: chat ativo com o cliente.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <CoordinatorChat
+              <CardContent className="p-6">
+                <CoordinatorInterface
                   coordinatorId={user?.id || 'coordinator'}
                   coordinatorName={user?.name || user?.email || 'Coordenador'}
                 />

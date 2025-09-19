@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
           .eq('id', conversation_id)
           .eq('human_requested', true)
           .is('chat_accepted_by', null)
+          .select()
           .single()
 
         conversation = result.data
@@ -77,32 +78,47 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Tentar adicionar mensagem via Supabase, senão usar mock
+      // Verificar se o coordenador já enviou mensagens para esta conversa
       try {
-        await supabaseAdmin
+        const { data: existingMessages } = await supabaseAdmin
           .from('chat_messages')
-          .insert({
-            conversation_id,
-            content: `👋 **${coordinator_name || 'Coordenador'} entrou no chat**\n\nOlá! Sou um especialista do NAF e estou aqui para ajudá-lo. Como posso ajudar você hoje?`,
-            sender_type: 'coordinator',
-            sender_id: coordinator_id,
-            sender_name: coordinator_name || 'Coordenador',
-            is_ai_response: false,
-            is_read: true
-          })
-      } catch (supabaseError) {
-        console.log('Usando mock para mensagem:', supabaseError)
-        await mockSupabaseAdmin
-          .from('chat_messages')
-          .insert({
-            conversation_id,
-            content: `👋 **${coordinator_name || 'Coordenador'} entrou no chat**\n\nOlá! Sou um especialista do NAF e estou aqui para ajudá-lo. Como posso ajudar você hoje?`,
-            sender_type: 'coordinator',
-            sender_id: coordinator_id,
-            sender_name: coordinator_name || 'Coordenador',
-            is_ai_response: false,
-            is_read: true
-          })
+          .select('id')
+          .eq('conversation_id', conversation_id)
+          .eq('sender_type', 'coordinator')
+          .eq('sender_id', coordinator_id)
+          .limit(1)
+
+        // Só adicionar mensagem de entrada se o coordenador ainda não enviou mensagens
+        if (!existingMessages || existingMessages.length === 0) {
+          try {
+            await supabaseAdmin
+              .from('chat_messages')
+              .insert({
+                conversation_id,
+                content: `👋 **${coordinator_name || 'Coordenador'} entrou no chat**\n\nOlá! Sou um especialista do NAF e estou aqui para ajudá-lo. Como posso ajudar você hoje?`,
+                sender_type: 'coordinator',
+                sender_id: coordinator_id,
+                sender_name: coordinator_name || 'Coordenador',
+                is_ai_response: false,
+                is_read: true
+              })
+          } catch (supabaseError) {
+            console.log('Usando mock para mensagem:', supabaseError)
+            await mockSupabaseAdmin
+              .from('chat_messages')
+              .insert({
+                conversation_id,
+                content: `👋 **${coordinator_name || 'Coordenador'} entrou no chat**\n\nOlá! Sou um especialista do NAF e estou aqui para ajudá-lo. Como posso ajudar você hoje?`,
+                sender_type: 'coordinator',
+                sender_id: coordinator_id,
+                sender_name: coordinator_name || 'Coordenador',
+                is_ai_response: false,
+                is_read: true
+              })
+          }
+        }
+      } catch (checkError) {
+        console.log('Erro ao verificar mensagens existentes:', checkError)
       }
 
       return NextResponse.json({
