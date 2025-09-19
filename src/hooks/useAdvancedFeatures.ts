@@ -119,27 +119,7 @@ export const useRealTimeNotifications = () => {
     setNotifications([])
   }
 
-  // Simular notificações em tempo real
-  useEffect(() => {
-    const eventSource = new EventSource('/api/notifications/stream')
-    
-    eventSource.onmessage = (event) => {
-      try {
-        const notification = JSON.parse(event.data)
-        addNotification(notification)
-      } catch (err) {
-        console.error('Erro ao processar notificação:', err)
-      }
-    }
-
-    eventSource.onerror = () => {
-      console.log('Conexão com notificações perdida, reconectando...')
-    }
-
-    return () => {
-      eventSource.close()
-    }
-  }, [])
+  // Sistema de notificações push removido conforme solicitado
 
   return {
     notifications,

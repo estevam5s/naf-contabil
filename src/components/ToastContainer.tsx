@@ -120,7 +120,7 @@ export default function ToastContainer() {
   const addNotification = (notification: Omit<ToastNotification, 'id' | 'timestamp'>) => {
     const newNotification: ToastNotification = {
       ...notification,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       timestamp: new Date()
     }
     
@@ -131,52 +131,7 @@ export default function ToastContainer() {
     setNotifications(prev => prev.filter(n => n.id !== id))
   }
 
-  // Integração com Server-Sent Events para notificações em tempo real
-  useEffect(() => {
-    let eventSource: EventSource | null = null
-
-    try {
-      eventSource = new EventSource('/api/notifications/stream')
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          
-          // Filtrar notificações de estatísticas para não poluir
-          if (data.type !== 'stats') {
-            addNotification({
-              type: data.type,
-              title: data.title,
-              message: data.message,
-              duration: data.type === 'error' ? 8000 : 5000
-            })
-          }
-        } catch (err) {
-          console.error('Erro ao processar notificação:', err)
-        }
-      }
-
-      eventSource.onerror = (error) => {
-        console.error('Erro na conexão de notificações:', error)
-        
-        // Tentar reconectar após 5 segundos
-        setTimeout(() => {
-          if (eventSource?.readyState === EventSource.CLOSED) {
-            eventSource = new EventSource('/api/notifications/stream')
-          }
-        }, 5000)
-      }
-
-    } catch (error) {
-      console.error('Erro ao inicializar notificações:', error)
-    }
-
-    return () => {
-      if (eventSource) {
-        eventSource.close()
-      }
-    }
-  }, [])
+  // Sistema de notificações push removido conforme solicitado
 
   // Expor função globalmente para outros componentes
   useEffect(() => {

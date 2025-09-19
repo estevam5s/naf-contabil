@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         icon: template.default_icon,
         color: template.default_color,
         send_email: template.default_send_email,
-        send_push: template.default_send_push,
+        send_push: false,
         send_sms: template.default_send_sms,
         is_persistent: template.is_persistent,
         expires_at: expiresAt,

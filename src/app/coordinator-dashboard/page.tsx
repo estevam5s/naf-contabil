@@ -562,7 +562,7 @@ export default function CoordinatorDashboard() {
                     <div className="p-3 bg-green-50 rounded-lg">
                       <h4 className="font-medium text-green-800">Próximo Treinamento</h4>
                       <p className="text-sm text-green-600">
-                        "Novas regras do e-Social" - 15/11/2024
+                        &quot;Novas regras do e-Social&quot; - 15/11/2024
                       </p>
                       <p className="text-xs text-green-600 mt-1">
                         12 estudantes inscritos

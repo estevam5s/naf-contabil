@@ -342,7 +342,7 @@ export default function PowerBIEmbedded() {
               <div className="space-y-4">
                 <div className="bg-white p-4 rounded-lg border border-yellow-200">
                   <h4 className="font-semibold mb-2">📊 Passo 1: Exportar Dados</h4>
-                  <p className="text-sm">Clique em "Exportar para Power BI" para baixar o arquivo Excel com todas as planilhas de dados.</p>
+                  <p className="text-sm">Clique em &quot;Exportar para Power BI&quot; para baixar o arquivo Excel com todas as planilhas de dados.</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-yellow-200">
                   <h4 className="font-semibold mb-2">📈 Passo 2: Importar no Power BI</h4>
