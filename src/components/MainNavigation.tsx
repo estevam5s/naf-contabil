@@ -22,7 +22,6 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import NotificationCenter from '@/components/notifications/NotificationCenter'
 
 const MainNavigation = () => {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -320,7 +319,6 @@ const MainNavigation = () => {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
             {/* Notification Center */}
-            <NotificationCenter userId="guest-user" userType="user" />
 
             {/* Quick Access Button */}
             <Link href="/naf-scheduling">

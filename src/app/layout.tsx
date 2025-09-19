@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
-import ToastContainer from '@/components/ToastContainer'
 import ScrollToTop from '@/components/ScrollToTop'
 import ChatWidget from '@/components/chat/ChatWidget'
 
@@ -25,7 +24,6 @@ export default function RootLayout({
           {children}
           <ChatWidget />
           <ScrollToTop />
-          <ToastContainer />
         </Providers>
       </body>
     </html>

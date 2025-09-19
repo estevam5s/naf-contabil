@@ -10,7 +10,6 @@ import {
   Calendar, Award, AlertTriangle, Download, Filter, RefreshCw,
   BarChart3, PieChart, Activity, Star, Target
 } from 'lucide-react'
-import NotificationCenter from '@/components/notifications/NotificationCenter'
 import { Line, Bar, Doughnut, Radar } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -230,7 +229,6 @@ export default function CoordinatorDashboard() {
         </div>
         
         <div className="flex gap-2 items-center">
-          <NotificationCenter userId="coordinator-1" userType="coordinator" />
 
           <select
             value={timeFilter}
