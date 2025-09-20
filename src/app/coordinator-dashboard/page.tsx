@@ -24,10 +24,14 @@ import {
   Target,
   ArrowLeft,
   LogOut,
-  MessageCircle
+  MessageCircle,
+  Award,
+  User,
+  BookOpen
 } from 'lucide-react'
 import Link from 'next/link'
 import CoordinatorInterface from '@/components/chat/CoordinatorInterface'
+import SimpleChart from '@/components/charts/SimpleChart'
 
 interface MetricData {
   period: string
@@ -191,10 +195,46 @@ export default function CoordinatorDashboard() {
     ]
   }
 
-  const exportReport = (type: string) => {
-    // Simular exportação de relatório
-    console.log(`Exportando relatório: ${type}`)
-    // Aqui seria implementada a lógica real de exportação
+  const exportReport = async (type: string, format: string = 'json') => {
+    try {
+      console.log(`📊 Exporting ${type} report in ${format} format`)
+
+      const response = await fetch(`/api/reports?type=${type}&format=${format}&period=30`)
+
+      if (!response.ok) {
+        throw new Error(`Erro ao gerar relatório: ${response.status}`)
+      }
+
+      if (format === 'json') {
+        const data = await response.json()
+        console.log('Report data:', data)
+
+        // Show success message or download data
+        alert(`Relatório ${data.summary.title} gerado com sucesso!\nTotal de atendimentos: ${data.metrics.totalAttendances}\nSatisfação: ${data.metrics.avgSatisfaction}/5`)
+        return
+      }
+
+      // For other formats, trigger download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+
+      const filename = `relatorio-naf-${type}-${new Date().toISOString().split('T')[0]}.${format}`
+      a.download = filename
+
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      console.log(`✅ Report downloaded: ${filename}`)
+
+    } catch (error) {
+      console.error('❌ Error exporting report:', error)
+      alert('Erro ao exportar relatório. Tente novamente.')
+    }
   }
 
   if (loading) {
@@ -267,10 +307,29 @@ export default function CoordinatorDashboard() {
                 <option value="quarter">Este Trimestre</option>
                 <option value="year">Este Ano</option>
               </select>
-              <Button onClick={() => exportReport('geral')}>
-                <Download className="h-4 w-4 mr-2" />
-                Exportar Relatório
-              </Button>
+              <div className="flex items-center space-x-2">
+                <select
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      exportReport('general', e.target.value)
+                      e.target.value = '' // Reset selection
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="">Exportar Relatório</option>
+                  <option value="json">📊 JSON (Visualizar)</option>
+                  <option value="csv">📋 CSV (Excel)</option>
+                  <option value="pdf">📄 PDF (Documento)</option>
+                  <option value="excel">📈 Excel (Planilha)</option>
+                  <option value="powerbi">⚡ Power BI (Dashboard)</option>
+                </select>
+                <Button onClick={() => exportReport('general')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Gerar
+                </Button>
+              </div>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
@@ -334,37 +393,44 @@ export default function CoordinatorDashboard() {
               {/* Gráfico de Atendimentos Semanais */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Atendimentos por Dia da Semana</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-blue-600" />
+                    Atendimentos por Dia da Semana
+                  </CardTitle>
                   <CardDescription>
-                    Distribuição de atendimentos vs agendamentos
+                    Análise visual da distribuição semanal de atendimentos
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {dashboardData.weeklyData.map((day, index) => (
-                      <div key={index} className="flex items-center space-x-4">
-                        <div className="w-8 text-sm font-medium">{day.day}</div>
-                        <div className="flex-1 flex space-x-2">
-                          <div className="flex-1">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span>Realizados</span>
-                              <span>{day.atendimentos}</span>
+                  <SimpleChart
+                    type="bar"
+                    data={dashboardData.weeklyData.map(day => ({
+                      label: day.day,
+                      value: day.atendimentos,
+                      color: '#3B82F6'
+                    }))}
+                    height={250}
+                    title="Atendimentos Realizados"
+                  />
+
+                  <div className="mt-6 pt-4 border-t">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Comparativo Detalhado:</h4>
+                    <div className="space-y-3">
+                      {dashboardData.weeklyData.map((day, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                              <span className="text-xs font-bold text-blue-600">{day.day}</span>
                             </div>
-                            <Progress value={(day.atendimentos / 65) * 100} className="h-2" />
+                            <span className="text-sm font-medium">{day.day === 'Seg' ? 'Segunda' : day.day === 'Ter' ? 'Terça' : day.day === 'Qua' ? 'Quarta' : day.day === 'Qui' ? 'Quinta' : day.day === 'Sex' ? 'Sexta' : day.day === 'Sáb' ? 'Sábado' : 'Domingo'}</span>
                           </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span>Agendados</span>
-                              <span>{day.agendamentos}</span>
-                            </div>
-                            <Progress 
-                              value={(day.agendamentos / 65) * 100} 
-                              className="h-2"
-                            />
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-blue-600">{day.atendimentos}</div>
+                            <div className="text-xs text-gray-500">{day.agendamentos} agendados</div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -372,25 +438,42 @@ export default function CoordinatorDashboard() {
               {/* Público-Alvo */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Distribuição do Público-Alvo</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5 text-green-600" />
+                    Distribuição do Público-Alvo
+                  </CardTitle>
                   <CardDescription>
-                    Categorias atendidas pelo NAF
+                    Segmentação visual das categorias atendidas pelo NAF
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {dashboardData.publicoAlvo.map((categoria, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">{categoria.categoria}</span>
-                          <div className="text-right">
-                            <div className="text-sm font-bold">{categoria.quantidade}</div>
-                            <div className="text-xs text-gray-500">{categoria.percentual}%</div>
+                  <SimpleChart
+                    type="pie"
+                    data={dashboardData.publicoAlvo.map((categoria, index) => ({
+                      label: categoria.categoria,
+                      value: categoria.quantidade,
+                      color: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'][index % 4]
+                    }))}
+                    height={200}
+                  />
+
+                  <div className="mt-6 pt-4 border-t">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Estatísticas Detalhadas:</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {dashboardData.publicoAlvo.map((categoria, index) => (
+                        <div key={index} className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium">{categoria.categoria}</span>
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'][index % 4] }}
+                            />
                           </div>
+                          <div className="text-lg font-bold text-gray-800">{categoria.quantidade}</div>
+                          <div className="text-xs text-gray-600">{categoria.percentual}% do total</div>
                         </div>
-                        <Progress value={categoria.percentual} className="h-2" />
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -525,25 +608,132 @@ export default function CoordinatorDashboard() {
           </TabsContent>
 
           <TabsContent value="students" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
+            {/* Enhanced Student Management with Portal Integration */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+              {/* Student Overview Cards */}
+              <Card className="lg:col-span-4">
                 <CardHeader>
-                  <CardTitle>Performance dos Estudantes</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Portal Integrado dos Estudantes
+                  </CardTitle>
+                  <CardDescription>
+                    Visão completa do painel dos estudantes integrada ao dashboard do coordenador
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="p-4 bg-emerald-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="h-4 w-4 text-emerald-600" />
+                        <span className="text-sm font-medium text-emerald-800">Atendimentos Ativos</span>
+                      </div>
+                      <p className="text-2xl font-bold text-emerald-700">
+                        {dashboardData.students.reduce((total, student) => total + student.total_attendances, 0)}
+                      </p>
+                      <p className="text-xs text-emerald-600">Total pelos estudantes</p>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Star className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-800">Avaliação Média</span>
+                      </div>
+                      <p className="text-2xl font-bold text-blue-700">
+                        {dashboardData.students.length > 0
+                          ? (dashboardData.students.reduce((total, student) => total + student.avg_rating, 0) / dashboardData.students.length).toFixed(1)
+                          : '0.0'}
+                      </p>
+                      <p className="text-xs text-blue-600">Satisfação dos clientes</p>
+                    </div>
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Award className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-medium text-purple-800">Estudantes Ativos</span>
+                      </div>
+                      <p className="text-2xl font-bold text-purple-700">{dashboardData.students.length}</p>
+                      <p className="text-xs text-purple-600">Realizando atendimentos</p>
+                    </div>
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <TrendingUp className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-800">Produtividade</span>
+                      </div>
+                      <p className="text-2xl font-bold text-orange-700">92%</p>
+                      <p className="text-xs text-orange-600">Taxa de eficiência</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Performance dos Estudantes */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Performance dos Estudantes</span>
+                    <Button size="sm" variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      Exportar Lista
+                    </Button>
+                  </CardTitle>
+                  <CardDescription>
+                    Ranking de performance e estatísticas detalhadas
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {dashboardData.students.map((student, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{student.student_name}</p>
-                          <p className="text-sm text-gray-600">{student.course}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold">{student.total_attendances} atendimentos</p>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Star className="h-3 w-3 text-yellow-500 mr-1" />
-                            {student.avg_rating}
+                    {dashboardData.students
+                      .sort((a, b) => b.avg_rating - a.avg_rating)
+                      .map((student, index) => (
+                      <div key={index} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
+                              #{index + 1}
+                            </div>
+                            <div>
+                              <p className="font-medium">{student.student_name}</p>
+                              <p className="text-sm text-gray-600">{student.course}</p>
+                            </div>
                           </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-emerald-600">{student.total_attendances}</p>
+                            <p className="text-xs text-gray-500">atendimentos</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div className="text-center p-2 bg-gray-50 rounded">
+                            <div className="flex items-center justify-center mb-1">
+                              <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                              <span className="font-medium">{student.avg_rating.toFixed(1)}</span>
+                            </div>
+                            <p className="text-xs text-gray-600">Avaliação</p>
+                          </div>
+                          <div className="text-center p-2 bg-gray-50 rounded">
+                            <div className="font-medium text-blue-600 mb-1">85%</div>
+                            <p className="text-xs text-gray-600">Taxa Conclusão</p>
+                          </div>
+                          <div className="text-center p-2 bg-gray-50 rounded">
+                            <div className="font-medium text-green-600 mb-1">Ativo</div>
+                            <p className="text-xs text-gray-600">Status</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex space-x-2">
+                          <Button size="sm" variant="outline" className="flex-1">
+                            <User className="h-3 w-3 mr-1" />
+                            Ver Perfil
+                          </Button>
+                          <Button size="sm" variant="outline" className="flex-1">
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            Contatar
+                          </Button>
+                          <Button size="sm" variant="outline" className="flex-1">
+                            <BarChart3 className="h-3 w-3 mr-1" />
+                            Relatórios
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -551,42 +741,153 @@ export default function CoordinatorDashboard() {
                 </CardContent>
               </Card>
 
+              {/* Capacitação e Treinamento */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Capacitação e Treinamento</CardTitle>
+                  <CardTitle>Sistema de Capacitação</CardTitle>
+                  <CardDescription>
+                    Treinamentos e desenvolvimento dos estudantes
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <h4 className="font-medium text-green-800">Próximo Treinamento</h4>
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <h4 className="font-medium text-green-800">Próximo Treinamento</h4>
+                      </div>
+                      <p className="text-sm text-green-700 font-medium">
+                        "Novas regras do e-Social"
+                      </p>
                       <p className="text-sm text-green-600">
-                        &quot;Novas regras do e-Social&quot; - 15/11/2024
+                        📅 15/11/2024 às 14h00
                       </p>
-                      <p className="text-xs text-green-600 mt-1">
-                        12 estudantes inscritos
+                      <p className="text-xs text-green-600 mt-2">
+                        👥 12 estudantes inscritos
                       </p>
+                      <Button size="sm" className="w-full mt-3 bg-green-600 hover:bg-green-700">
+                        <Users className="h-3 w-3 mr-1" />
+                        Gerenciar Inscrições
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Temas para próximos treinamentos:</h4>
-                      <ul className="text-sm space-y-1">
-                        <li className="flex justify-between">
-                          <span>• Declaração de IR 2025</span>
-                          <Badge variant="outline">Planejado</Badge>
-                        </li>
-                        <li className="flex justify-between">
-                          <span>• Mudanças no MEI</span>
-                          <Badge variant="outline">Em análise</Badge>
-                        </li>
-                        <li className="flex justify-between">
-                          <span>• LGPD no atendimento</span>
-                          <Badge variant="outline">Aprovado</Badge>
-                        </li>
-                      </ul>
+
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">Pipeline de Treinamentos:</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                          <span className="text-sm">• Declaração de IR 2025</span>
+                          <Badge className="bg-blue-100 text-blue-800 text-xs">Planejado</Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-2 bg-yellow-50 rounded">
+                          <span className="text-sm">• Mudanças no MEI</span>
+                          <Badge className="bg-yellow-100 text-yellow-800 text-xs">Em análise</Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                          <span className="text-sm">• LGPD no atendimento</span>
+                          <Badge className="bg-green-100 text-green-800 text-xs">Aprovado</Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t">
+                      <Button variant="outline" className="w-full" size="sm">
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Criar Novo Treinamento
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Portal Integration Features */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Funcionalidades do Portal do Estudante</CardTitle>
+                <CardDescription>
+                  Acesso direto às principais funcionalidades disponíveis aos estudantes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Target className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">Dashboard</h3>
+                        <p className="text-sm text-gray-600">Visão geral</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Estatísticas principais, próximos atendimentos e progresso
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full">
+                      <BarChart3 className="h-3 w-3 mr-1" />
+                      Visualizar
+                    </Button>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">Atendimentos</h3>
+                        <p className="text-sm text-gray-600">Gestão completa</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Agendamentos, histórico, status e avaliações
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Gerenciar
+                    </Button>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Award className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">Treinamentos</h3>
+                        <p className="text-sm text-gray-600">Capacitação</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Módulos, progresso, certificações e avaliações
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full">
+                      <BookOpen className="h-3 w-3 mr-1" />
+                      Acompanhar
+                    </Button>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">Relatórios</h3>
+                        <p className="text-sm text-gray-600">Performance</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Exportações, métricas pessoais e análises
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full">
+                      <Download className="h-3 w-3 mr-1" />
+                      Exportar
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="fiscal" className="space-y-6">
@@ -804,79 +1105,212 @@ export default function CoordinatorDashboard() {
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  title: 'Relatório Mensal',
-                  description: 'Consolidado completo do mês',
-                  icon: FileText,
-                  color: 'text-blue-600',
-                  bgColor: 'bg-blue-100'
-                },
-                {
-                  title: 'Relatório de Performance',
-                  description: 'Métricas de estudantes e serviços',
-                  icon: BarChart3,
-                  color: 'text-green-600',
-                  bgColor: 'bg-green-100'
-                },
-                {
-                  title: 'Relatório Estatístico',
-                  description: 'Análise estatística detalhada',
-                  icon: PieChart,
-                  color: 'text-purple-600',
-                  bgColor: 'bg-purple-100'
-                },
-                {
-                  title: 'Relatório de Qualidade',
-                  description: 'Avaliações e satisfação',
-                  icon: Star,
-                  color: 'text-yellow-600',
-                  bgColor: 'bg-yellow-100'
-                },
-                {
-                  title: 'Relatório Gerencial',
-                  description: 'Visão executiva para gestão',
-                  icon: Target,
-                  color: 'text-red-600',
-                  bgColor: 'bg-red-100'
-                },
-                {
-                  title: 'Relatório de Capacitação',
-                  description: 'Treinamentos e desenvolvimento',
-                  icon: Users,
-                  color: 'text-indigo-600',
-                  bgColor: 'bg-indigo-100'
-                }
-              ].map((report, index) => {
-                const IconComponent = report.icon
-                return (
-                  <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-12 h-12 ${report.bgColor} rounded-lg flex items-center justify-center`}>
-                          <IconComponent className={`h-6 w-6 ${report.color}`} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium">{report.title}</h3>
-                          <p className="text-sm text-gray-600">{report.description}</p>
-                        </div>
+            {/* Enhanced Report Dashboard */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+              <Card className="lg:col-span-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Central de Relatórios Avançados
+                  </CardTitle>
+                  <CardDescription>
+                    Sistema completo de geração de relatórios com integração Supabase e Power BI
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-800">Dados em Tempo Real</span>
                       </div>
-                      <div className="mt-4 flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          onClick={() => exportReport(report.title)}
-                          className="flex-1"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Gerar
-                        </Button>
+                      <p className="text-xs text-blue-600">Conectado ao Supabase</p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Download className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">5 Formatos</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+                      <p className="text-xs text-green-600">JSON, CSV, PDF, Excel, Power BI</p>
+                    </div>
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <PieChart className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-medium text-purple-800">Gráficos Profissionais</span>
+                      </div>
+                      <p className="text-xs text-purple-600">Visualizações avançadas</p>
+                    </div>
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-800">Insights IA</span>
+                      </div>
+                      <p className="text-xs text-orange-600">Análises automáticas</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[
+                      {
+                        title: 'Relatório Geral',
+                        type: 'general',
+                        description: 'Visão completa de todas as atividades e métricas do NAF',
+                        icon: FileText,
+                        color: 'text-blue-600',
+                        bgColor: 'bg-blue-100',
+                        metrics: ['Total de atendimentos', 'Estudantes ativos', 'Taxa de satisfação', 'Crescimento mensal']
+                      },
+                      {
+                        title: 'Performance',
+                        type: 'performance',
+                        description: 'Análise detalhada do desempenho de estudantes e serviços',
+                        icon: BarChart3,
+                        color: 'text-green-600',
+                        bgColor: 'bg-green-100',
+                        metrics: ['Produtividade', 'Eficiência', 'Qualidade', 'Melhoria contínua']
+                      },
+                      {
+                        title: 'Estudantes',
+                        type: 'students',
+                        description: 'Estatísticas e métricas específicas dos estudantes',
+                        icon: Users,
+                        color: 'text-purple-600',
+                        bgColor: 'bg-purple-100',
+                        metrics: ['Engajamento', 'Participação', 'Desenvolvimento', 'Capacitação']
+                      },
+                      {
+                        title: 'Serviços',
+                        type: 'services',
+                        description: 'Performance e utilização dos serviços oferecidos',
+                        icon: Star,
+                        color: 'text-yellow-600',
+                        bgColor: 'bg-yellow-100',
+                        metrics: ['Demanda', 'Conclusão', 'Tempo médio', 'Satisfação']
+                      },
+                      {
+                        title: 'Satisfação',
+                        type: 'satisfaction',
+                        description: 'Avaliação da satisfação e qualidade do atendimento',
+                        icon: Star,
+                        color: 'text-pink-600',
+                        bgColor: 'bg-pink-100',
+                        metrics: ['NPS', 'Avaliações', 'Feedback', 'Melhorias']
+                      },
+                      {
+                        title: 'Power BI Dashboard',
+                        type: 'powerbi',
+                        description: 'Dashboard interativo para análise executiva',
+                        icon: PieChart,
+                        color: 'text-indigo-600',
+                        bgColor: 'bg-indigo-100',
+                        metrics: ['Dashboards', 'KPIs', 'Tendências', 'Projeções']
+                      }
+                    ].map((report, index) => {
+                      const IconComponent = report.icon
+                      return (
+                        <Card key={index} className="hover:shadow-lg transition-all cursor-pointer group">
+                          <CardContent className="p-6">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <div className={`w-12 h-12 ${report.bgColor} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                <IconComponent className={`h-6 w-6 ${report.color}`} />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-medium group-hover:text-blue-600 transition-colors">{report.title}</h3>
+                                <p className="text-sm text-gray-600">{report.description}</p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                              <h4 className="text-xs font-medium text-gray-500 uppercase">Métricas Incluídas:</h4>
+                              <div className="flex flex-wrap gap-1">
+                                {report.metrics.map((metric, i) => (
+                                  <span key={i} className="px-2 py-1 bg-gray-100 text-xs rounded-full">
+                                    {metric}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => exportReport(report.type, 'json')}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                <BarChart3 className="h-3 w-3 mr-1" />
+                                Visualizar
+                              </Button>
+                              <select
+                                className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    exportReport(report.type, e.target.value)
+                                    e.target.value = ''
+                                  }
+                                }}
+                                defaultValue=""
+                              >
+                                <option value="">Exportar</option>
+                                <option value="csv">📋 CSV</option>
+                                <option value="pdf">📄 PDF</option>
+                                <option value="excel">📈 Excel</option>
+                                <option value="powerbi">⚡ Power BI</option>
+                              </select>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Quick Export Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Exportação Rápida</CardTitle>
+                <CardDescription>
+                  Gere relatórios personalizados em poucos cliques
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tipo de Relatório:</label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                      <option value="general">Relatório Geral</option>
+                      <option value="performance">Performance</option>
+                      <option value="students">Estudantes</option>
+                      <option value="services">Serviços</option>
+                      <option value="satisfaction">Satisfação</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Período:</label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                      <option value="7">Últimos 7 dias</option>
+                      <option value="30">Últimos 30 dias</option>
+                      <option value="90">Últimos 3 meses</option>
+                      <option value="365">Último ano</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Formato:</label>
+                    <div className="flex space-x-2">
+                      <Button size="sm" className="flex-1">
+                        <Download className="h-4 w-4 mr-1" />
+                        CSV
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1">
+                        <FileText className="h-4 w-4 mr-1" />
+                        PDF
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
