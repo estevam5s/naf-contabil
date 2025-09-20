@@ -197,9 +197,10 @@ export default function CoordinatorDashboard() {
 
   const exportReport = async (type: string, format: string = 'json') => {
     try {
-      console.log(`📊 Exporting ${type} report in ${format} format`)
+      console.log(`📊 Exporting ${type} report in ${format} format with charts`)
 
-      const response = await fetch(`/api/reports?type=${type}&format=${format}&period=30`)
+      // Use the advanced reports API for all exports
+      const response = await fetch(`/api/reports/advanced?type=${type}&format=${format}`)
 
       if (!response.ok) {
         throw new Error(`Erro ao gerar relatório: ${response.status}`)
@@ -207,21 +208,35 @@ export default function CoordinatorDashboard() {
 
       if (format === 'json') {
         const data = await response.json()
-        console.log('Report data:', data)
+        console.log('Report data with charts:', data)
 
-        // Show success message or download data
-        alert(`Relatório ${data.summary.title} gerado com sucesso!\nTotal de atendimentos: ${data.metrics.totalAttendances}\nSatisfação: ${data.metrics.avgSatisfaction}/5`)
+        // Show enhanced success message with chart information
+        const charts = data.charts
+        const chartsInfo = charts ? `\nGráficos incluídos: ${Object.keys(charts.pieCharts).length} Pizza, ${Object.keys(charts.barCharts).length} Barras, ${Object.keys(charts.lineCharts).length} Linha` : ''
+
+        alert(`✅ Relatório ${type} gerado com sucesso!${chartsInfo}\nDados e gráficos carregados no dashboard.`)
         return
       }
 
-      // For other formats, trigger download
+      // For other formats, trigger download with chart data included
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
 
-      const filename = `relatorio-naf-${type}-${new Date().toISOString().split('T')[0]}.${format}`
+      // Enhanced filename with proper extensions
+      const extensions = {
+        'pdf': 'pdf',
+        'txt': 'txt',
+        'doc': 'docx',
+        'docx': 'docx',
+        'excel': 'xlsx',
+        'powerbi': 'json'
+      }
+
+      const extension = extensions[format as keyof typeof extensions] || format
+      const filename = `relatorio-naf-${type}-${new Date().toISOString().split('T')[0]}.${extension}`
       a.download = filename
 
       document.body.appendChild(a)
@@ -229,11 +244,12 @@ export default function CoordinatorDashboard() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
 
-      console.log(`✅ Report downloaded: ${filename}`)
+      console.log(`✅ Report with charts downloaded: ${filename}`)
+      alert(`✅ Relatório baixado com sucesso!\nArquivo: ${filename}\nIncluindo todos os gráficos e dados detalhados.`)
 
     } catch (error) {
       console.error('❌ Error exporting report:', error)
-      alert('Erro ao exportar relatório. Tente novamente.')
+      alert('❌ Erro ao exportar relatório. Verifique sua conexão e tente novamente.')
     }
   }
 
@@ -318,12 +334,14 @@ export default function CoordinatorDashboard() {
                   }}
                   defaultValue=""
                 >
-                  <option value="">Exportar Relatório</option>
-                  <option value="json">📊 JSON (Visualizar)</option>
-                  <option value="csv">📋 CSV (Excel)</option>
-                  <option value="pdf">📄 PDF (Documento)</option>
-                  <option value="excel">📈 Excel (Planilha)</option>
-                  <option value="powerbi">⚡ Power BI (Dashboard)</option>
+                  <option value="">📊 Escolher Formato de Download</option>
+                  <option value="json">📋 JSON (Visualizar no Dashboard)</option>
+                  <option value="pdf">📄 PDF (Documento com Gráficos)</option>
+                  <option value="txt">📝 TXT (Texto Simples)</option>
+                  <option value="doc">📄 DOC (Word Document)</option>
+                  <option value="docx">📄 DOCX (Word Document)</option>
+                  <option value="excel">📈 Excel (Planilha Completa)</option>
+                  <option value="powerbi">⚡ Power BI (Dashboard Interativo)</option>
                 </select>
                 <Button onClick={() => exportReport('general')}>
                   <Download className="h-4 w-4 mr-2" />
@@ -514,92 +532,186 @@ export default function CoordinatorDashboard() {
           </TabsContent>
 
           <TabsContent value="services" className="space-y-6">
+            {/* Performance Overview with Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-green-600" />
+                    Performance dos Serviços
+                  </CardTitle>
+                  <CardDescription>
+                    Análise visual das solicitações por serviço
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SimpleChart
+                    type="bar"
+                    data={dashboardData.services.map(service => ({
+                      label: service.service_name.split(' ')[0], // First word for shorter labels
+                      value: service.requests_count,
+                      color: '#10B981'
+                    }))}
+                    height={200}
+                    title="Solicitações por Serviço"
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5 text-blue-600" />
+                    Taxa de Conclusão
+                  </CardTitle>
+                  <CardDescription>
+                    Distribuição de status dos atendimentos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SimpleChart
+                    type="pie"
+                    data={[
+                      {
+                        label: 'Concluídos',
+                        value: dashboardData.services.reduce((total, service) => total + service.completed_count, 0),
+                        color: '#10B981'
+                      },
+                      {
+                        label: 'Pendentes',
+                        value: dashboardData.services.reduce((total, service) => total + service.pending_count, 0),
+                        color: '#F59E0B'
+                      },
+                      {
+                        label: 'Em Andamento',
+                        value: dashboardData.services.reduce((total, service) => total + (service.requests_count - service.completed_count - service.pending_count), 0),
+                        color: '#3B82F6'
+                      }
+                    ]}
+                    height={200}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Detailed Service Performance */}
             <Card>
               <CardHeader>
-                <CardTitle>Performance dos Serviços</CardTitle>
+                <CardTitle>Análise Detalhada dos Serviços</CardTitle>
                 <CardDescription>
-                  Análise detalhada dos serviços mais demandados
+                  Métricas completas e indicadores de performance
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {dashboardData.services.map((service, index) => (
-                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-3">
+                    <div key={index} className="border rounded-lg p-6 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-gray-50">
+                      <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium">{service.service_name}</h3>
-                            {service.is_featured && (
-                              <Badge variant="secondary" className="text-xs">
-                                Destaque
-                              </Badge>
-                            )}
-                            {service.service_difficulty && (
-                              <Badge variant="outline" className="text-xs">
-                                {service.service_difficulty}
-                              </Badge>
-                            )}
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
+                              #{index + 1}
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-800">{service.service_name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                {service.is_featured && (
+                                  <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                                    ⭐ Destaque
+                                  </Badge>
+                                )}
+                                {service.service_difficulty && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {service.service_difficulty}
+                                  </Badge>
+                                )}
+                                {service.service_category && (
+                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                                    {service.service_category}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
                           {service.service_description && (
-                            <p className="text-sm text-gray-600 mb-2">
-                              {service.service_description.length > 100
-                                ? `${service.service_description.substring(0, 100)}...`
+                            <p className="text-sm text-gray-600 mb-3 bg-gray-50 p-3 rounded-lg">
+                              {service.service_description.length > 150
+                                ? `${service.service_description.substring(0, 150)}...`
                                 : service.service_description}
                             </p>
                           )}
-                          {service.service_category && (
-                            <Badge variant="outline" className="text-xs mb-2">
-                              {service.service_category}
-                            </Badge>
-                          )}
                         </div>
-                        <Badge className="flex items-center space-x-1">
-                          <Star className="h-3 w-3" />
-                          <span>{service.satisfaction_rating.toFixed(1)}</span>
-                        </Badge>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center space-x-1 mb-1">
+                            <Star className="h-4 w-4 text-yellow-500" />
+                            <span className="text-lg font-bold text-yellow-600">{service.satisfaction_rating.toFixed(1)}</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Satisfação</p>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-600">Solicitações</p>
-                          <p className="font-semibold">{service.requests_count}</p>
+
+                      {/* Professional Metrics Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                          <p className="text-2xl font-bold text-blue-600">{service.requests_count}</p>
+                          <p className="text-xs text-blue-600 font-medium">Solicitações</p>
                         </div>
-                        <div>
-                          <p className="text-gray-600">Concluídos</p>
-                          <p className="font-semibold text-green-600">{service.completed_count}</p>
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <p className="text-2xl font-bold text-green-600">{service.completed_count}</p>
+                          <p className="text-xs text-green-600 font-medium">Concluídos</p>
                         </div>
-                        <div>
-                          <p className="text-gray-600">Pendentes</p>
-                          <p className="font-semibold text-orange-600">{service.pending_count}</p>
+                        <div className="text-center p-3 bg-orange-50 rounded-lg">
+                          <p className="text-2xl font-bold text-orange-600">{service.pending_count}</p>
+                          <p className="text-xs text-orange-600 font-medium">Pendentes</p>
                         </div>
-                        <div>
-                          <p className="text-gray-600">Tempo Médio</p>
-                          <p className="font-semibold">{service.avg_duration_minutes}min</p>
+                        <div className="text-center p-3 bg-purple-50 rounded-lg">
+                          <p className="text-2xl font-bold text-purple-600">{service.avg_duration_minutes}</p>
+                          <p className="text-xs text-purple-600 font-medium">Min/Atend.</p>
                         </div>
                         {service.views_count !== undefined && (
-                          <div>
-                            <p className="text-gray-600">Visualizações</p>
-                            <p className="font-semibold text-blue-600">{service.views_count}</p>
+                          <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                            <p className="text-2xl font-bold text-indigo-600">{service.views_count}</p>
+                            <p className="text-xs text-indigo-600 font-medium">Visualizações</p>
                           </div>
                         )}
                       </div>
-                      <div className="mt-3">
-                        <Progress
-                          value={service.requests_count > 0 ? (service.completed_count / service.requests_count) * 100 : 0}
-                          className="h-2"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Taxa de conclusão: {service.requests_count > 0 ? ((service.completed_count / service.requests_count) * 100).toFixed(1) : '0.0'}%
-                        </p>
+
+                      {/* Progress Visualization */}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-gray-600">Taxa de Conclusão</span>
+                          <span className="text-sm font-bold text-green-600">
+                            {service.requests_count > 0 ? ((service.completed_count / service.requests_count) * 100).toFixed(1) : '0.0'}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${service.requests_count > 0 ? (service.completed_count / service.requests_count) * 100 : 0}%` }}
+                          />
+                        </div>
                       </div>
-                      {service.service_id && (
-                        <div className="mt-3 flex justify-end">
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-between items-center pt-3 border-t">
+                        <div className="flex space-x-2">
+                          <Button size="sm" variant="outline">
+                            <BarChart3 className="h-3 w-3 mr-1" />
+                            Analytics
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <Download className="h-3 w-3 mr-1" />
+                            Exportar
+                          </Button>
+                        </div>
+                        {service.service_id && (
                           <Link href={`/services`}>
-                            <Button variant="outline" size="sm">
-                              Ver Detalhes
+                            <Button size="sm">
+                              Ver Detalhes Completos
                             </Button>
                           </Link>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1250,9 +1362,11 @@ export default function CoordinatorDashboard() {
                                 }}
                                 defaultValue=""
                               >
-                                <option value="">Exportar</option>
-                                <option value="csv">📋 CSV</option>
+                                <option value="">📊 Formato</option>
                                 <option value="pdf">📄 PDF</option>
+                                <option value="txt">📝 TXT</option>
+                                <option value="doc">📄 DOC</option>
+                                <option value="docx">📄 DOCX</option>
                                 <option value="excel">📈 Excel</option>
                                 <option value="powerbi">⚡ Power BI</option>
                               </select>
