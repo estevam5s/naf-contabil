@@ -338,7 +338,7 @@ export default function StudentPortal() {
     return `${mins}min`
   }
 
-  if (loading) {
+  if (loading || !dashboardData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -569,7 +569,7 @@ export default function StudentPortal() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {dashboardData.recentEvaluations.slice(0, 3).map((evaluation, index) => (
+                    {dashboardData?.recentEvaluations?.slice(0, 3).map((evaluation, index) => (
                       <div key={index} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium">
@@ -618,10 +618,10 @@ export default function StudentPortal() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {dashboardData.attendances
-                    .filter(a => ['AGENDADO', 'EM_ANDAMENTO'].includes(a.status))
-                    .slice(0, 3)
-                    .map((attendance) => (
+                  {dashboardData?.attendances
+                    ?.filter(a => ['AGENDADO', 'EM_ANDAMENTO'].includes(a.status))
+                    ?.slice(0, 3)
+                    ?.map((attendance) => (
                       <div key={attendance.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
@@ -679,7 +679,7 @@ export default function StudentPortal() {
             </div>
 
             <div className="space-y-4">
-              {dashboardData.attendances.map((attendance) => (
+              {dashboardData?.attendances?.map((attendance) => (
                 <Card key={attendance.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -801,7 +801,7 @@ export default function StudentPortal() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {dashboardData.trainings.map((progress) => (
+              {dashboardData?.trainings?.map((progress) => (
                 <Card key={progress.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -831,7 +831,7 @@ export default function StudentPortal() {
                     <div className="mb-4">
                       <p className="text-sm font-medium text-gray-600 mb-1">Tópicos Abordados</p>
                       <div className="flex flex-wrap gap-1">
-                        {progress.training.topics.map((topic, index) => (
+                        {progress.training?.topics?.map((topic, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
                             {topic}
                           </Badge>
@@ -930,7 +930,7 @@ export default function StudentPortal() {
                     <CardContent>
                       <SimpleChart
                         type="pie"
-                        data={Object.entries(analyticsData.clientCategoryStats).map(([category, stats]: [string, any], index) => ({
+                        data={Object.entries(analyticsData?.clientCategoryStats || {}).map(([category, stats]: [string, any], index) => ({
                           label: category,
                           value: stats.count,
                           color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][index % 5]
@@ -952,7 +952,7 @@ export default function StudentPortal() {
                     <CardContent>
                       <SimpleChart
                         type="bar"
-                        data={Object.entries(analyticsData.serviceTypeStats).map(([service, stats]: [string, any]) => ({
+                        data={Object.entries(analyticsData?.serviceTypeStats || {}).map(([service, stats]: [string, any]) => ({
                           label: service.length > 15 ? service.substring(0, 12) + '...' : service,
                           value: stats.completionRate,
                           color: '#10B981'
@@ -975,7 +975,7 @@ export default function StudentPortal() {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {Object.entries(analyticsData.competencyStats).map(([competency, data]: [string, any]) => (
+                        {Object.entries(analyticsData?.competencyStats || {}).map(([competency, data]: [string, any]) => (
                           <div key={competency} className="text-center p-4 border rounded-lg">
                             <div className="text-2xl font-bold text-purple-600">
                               {data.avg.toFixed(1)}/5
@@ -1009,7 +1009,7 @@ export default function StudentPortal() {
                     <CardContent>
                       <SimpleChart
                         type="line"
-                        data={Object.entries(analyticsData.monthlyPerformance)
+                        data={Object.entries(analyticsData?.monthlyPerformance || {})
                           .sort(([a], [b]) => a.localeCompare(b))
                           .map(([month, data]: [string, any]) => ({
                             label: month,
@@ -1116,7 +1116,7 @@ export default function StudentPortal() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {dashboardData.profile.specializations.map((spec, index) => (
+                    {dashboardData?.profile?.specializations?.map((spec, index) => (
                       <Badge key={index} variant="outline" className="bg-green-50 text-green-700">
                         {spec}
                       </Badge>
