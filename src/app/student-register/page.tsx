@@ -80,7 +80,44 @@ export default function StudentRegister() {
     'Administração',
     'Direito',
     'Economia',
-    'Gestão Financeira'
+    'Gestão Financeira',
+    'Gestão de Recursos Humanos',
+    'Marketing',
+    'Logística',
+    'Gestão Pública',
+    'Comércio Exterior',
+    'Processos Gerenciais',
+    'Análise e Desenvolvimento de Sistemas',
+    'Gestão da Tecnologia da Informação',
+    'Secretariado Executivo',
+    'Turismo',
+    'Hotelaria',
+    'Gastronomia',
+    'Design Gráfico',
+    'Publicidade e Propaganda',
+    'Jornalismo',
+    'Relações Públicas',
+    'Psicologia',
+    'Serviço Social',
+    'Pedagogia',
+    'Letras',
+    'História',
+    'Geografia',
+    'Matemática',
+    'Física',
+    'Química',
+    'Biologia',
+    'Enfermagem',
+    'Fisioterapia',
+    'Nutrição',
+    'Farmácia',
+    'Medicina Veterinária',
+    'Engenharia Civil',
+    'Engenharia Elétrica',
+    'Engenharia Mecânica',
+    'Engenharia de Produção',
+    'Arquitetura e Urbanismo',
+    'Outro'
   ]
 
   const semesters = [
@@ -105,7 +142,7 @@ export default function StudentRegister() {
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof StudentData],
+          ...(prev[parent as keyof StudentData] as object),
           [child]: value
         }
       }))

@@ -1,12 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
 import { mockSupabaseAdmin } from './mock-supabase'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+// Configuração segura - usar mock sempre até configurar Supabase real
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-// Usar mock se não tiver configuração real ou se estiver em desenvolvimento
-const USE_MOCK = !supabaseUrl || !supabaseServiceKey || supabaseServiceKey === supabaseAnonKey || process.env.NODE_ENV === 'development'
+// Usar mock sempre por enquanto (até configurar Supabase real)
+const USE_MOCK = true
+
+// Log de debug para verificar configuração
+console.log('🔧 Supabase config:', {
+  hasUrl: !!supabaseUrl,
+  hasAnonKey: !!supabaseAnonKey,
+  hasServiceKey: !!supabaseServiceKey,
+  useMock: USE_MOCK,
+  environment: process.env.NODE_ENV
+})
 
 export const supabase = USE_MOCK ? mockSupabaseAdmin : createClient(supabaseUrl, supabaseAnonKey)
 export const supabaseAdmin = USE_MOCK ? mockSupabaseAdmin : createClient(supabaseUrl, supabaseServiceKey)

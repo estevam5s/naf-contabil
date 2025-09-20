@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📥 POST /api/students/register - Iniciando cadastro')
     const data = await request.json()
+    console.log('📋 Dados recebidos (sem senha):', { ...data, password: '[HIDDEN]' })
 
     // Validações básicas
     if (!data.email || !data.password || !data.name || !data.course || !data.semester) {
@@ -113,14 +115,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Inserir estudante no banco
+    console.log('💾 Tentando inserir no banco...')
     const { data: newStudent, error: insertError } = await supabaseAdmin
       .from('students')
       .insert(studentData)
 
+    console.log('📊 Resultado da inserção:', { data: newStudent, error: insertError })
+
     if (insertError) {
-      console.error('Erro ao inserir estudante:', insertError)
+      console.error('❌ Erro ao inserir estudante:', insertError)
       return NextResponse.json(
-        { message: 'Erro ao criar conta' },
+        { message: 'Erro ao criar conta', details: insertError.message || String(insertError) },
+        { status: 500 }
+      )
+    }
+
+    if (!newStudent) {
+      console.error('❌ Nenhum estudante retornado')
+      return NextResponse.json(
+        { message: 'Erro ao criar conta - dados não retornados' },
         { status: 500 }
       )
     }
