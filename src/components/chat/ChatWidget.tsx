@@ -106,16 +106,17 @@ export default function ChatWidget() {
 
 Sou seu assistente virtual e estou aqui para ajudar com suas dúvidas sobre:
 
-• **Declaração de Imposto de Renda**
-• **Formalização MEI**
-• **Abertura de CNPJ**
-• **Consultoria fiscal básica**
-• **Planejamento tributário**
+• **📊 Declaração de Imposto de Renda**
+• **🏢 Formalização MEI e CNPJ**
+• **💼 Consultoria fiscal básica**
+• **📈 Planejamento tributário**
+• **📋 Orientação contábil**
+• **🎯 Serviços empresariais**
 
 Como posso ajudar você hoje?
 
 ---
-💡 *Dica: Se precisar de atendimento personalizado, posso conectá-lo com um de nossos especialistas!*`
+💡 *Dica: Se precisar de atendimento personalizado, clique em "Falar com especialista" ou digite sua solicitação!*`
 
     const message: Message = {
       id: generateId(),
@@ -157,6 +158,7 @@ Como posso ajudar você hoje?
       is_read: true
     }
 
+    const messageToSend = inputValue
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
@@ -185,12 +187,13 @@ Como posso ajudar você hoje?
 
       // Se solicitou agente humano apenas em modo AI, marcar flag
       if (chatStatus === 'ai') {
-        const messageContent = inputValue.toLowerCase()
+        const messageContent = messageToSend.toLowerCase()
         const wantsHuman = messageContent.includes('falar com') ||
                            messageContent.includes('agente') ||
                            messageContent.includes('atendente') ||
                            messageContent.includes('pessoa') ||
-                           messageContent.includes('humano')
+                           messageContent.includes('humano') ||
+                           messageContent.includes('especialista')
 
         if (wantsHuman) {
           await requestHumanSupport()
@@ -205,10 +208,14 @@ Como posso ajudar você hoje?
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: userMessage.content,
-          conversationHistory: messages.slice(-5)
+          conversation_id: conversation.id,
+          message: messageToSend
         })
       })
+
+      if (!aiResponse.ok) {
+        throw new Error(`HTTP error! status: ${aiResponse.status}`)
+      }
 
       const aiData = await aiResponse.json()
 
@@ -243,9 +250,9 @@ Como posso ajudar você hoje?
       console.error('Erro ao enviar mensagem:', error)
       const errorMessage: Message = {
         id: generateId(),
-        content: 'Desculpe, ocorreu um erro. Tente novamente ou entre em contato pelo telefone (48) 98461-4449.',
+        content: '🚨 **Erro Temporário**\n\nDesculpe, ocorreu um erro temporário. Tente:\n\n• Enviar novamente sua mensagem\n• Atualizar a página\n• Entrar em contato: (48) 98461-4449\n\n*Nossa equipe está trabalhando para resolver o problema.*',
         sender_type: 'assistant',
-        sender_name: 'Assistente NAF',
+        sender_name: 'Sistema NAF',
         created_at: new Date().toISOString(),
         is_read: true
       }
@@ -469,8 +476,8 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className={`w-[450px] max-w-[95vw] h-[600px] max-h-[80vh] shadow-2xl transition-all duration-300 ${
-          isMinimized ? 'h-14' : 'h-[600px] max-h-[80vh]'
+        <Card className={`w-[480px] max-w-[95vw] shadow-2xl transition-all duration-300 ${
+          isMinimized ? 'h-14' : 'h-[650px] max-h-[85vh]'
         }`}>
           <CardHeader className="p-4 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-t-lg">
             <div className="flex items-center justify-between">
@@ -507,7 +514,7 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
           </CardHeader>
 
           {!isMinimized && (
-            <CardContent className="p-0 flex flex-col h-[520px] max-h-[calc(80vh-80px)]">
+            <CardContent className="p-0 flex flex-col h-[570px] max-h-[calc(85vh-80px)]">
               <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
                 <div className="space-y-4">
                   {messages.map((message) => (
@@ -589,27 +596,37 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
                     </Button>
                   )}
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <div className="flex space-x-2">
+                <div className="flex justify-between items-center mt-3">
+                  <div className="flex flex-wrap gap-2">
                     {chatStatus === 'ai' && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={requestHumanSupport}
-                        className="text-xs"
+                        className="text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
                       >
                         <User className="h-3 w-3 mr-1" />
                         Falar com especialista
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" className="text-xs">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      onClick={() => window.open('tel:+5548984614449')}
+                    >
                       <Phone className="h-3 w-3 mr-1" />
                       (48) 98461-4449
                     </Button>
                     {chatStatus !== 'active_human' && (
-                      <Button variant="ghost" size="sm" className="text-xs">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-50"
+                        onClick={() => window.open('/agendamento', '_blank')}
+                      >
                         <Calendar className="h-3 w-3 mr-1" />
-                        Agendar
+                        Agendar presencial
                       </Button>
                     )}
                   </div>

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       if (error) throw error
 
       // Calcular mensagens não lidas para cada conversa
-      const conversationsWithUnread = conversations?.map(conv => {
+      const conversationsWithUnread = conversations?.map((conv: any) => {
         const unreadCount = conv.messages?.filter(
           (msg: any) => msg.sender_type === 'user' && !msg.is_read
         ).length || 0
@@ -107,10 +107,21 @@ export async function POST(request: NextRequest) {
         status: 'active',
         is_online: true
       })
-      .select()
-      .single()
 
-    if (error) throw error
+    console.log('💾 Resultado da inserção da conversa:', { data: conversation, error })
+
+    if (error) {
+      console.error('❌ Erro ao criar conversa:', error)
+      throw error
+    }
+
+    if (!conversation) {
+      console.error('❌ Nenhuma conversa retornada')
+      return NextResponse.json(
+        { error: 'Erro ao criar conversa - dados não retornados' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ conversation })
 

@@ -78,6 +78,8 @@ class MockQuery {
   private updateData: any = null
   private insertData: any = null
   private isSingle: boolean = false
+  private orderBy: { column: string, ascending: boolean } | null = null
+  private limitValue: number | null = null
 
   constructor(
     private tableName: string,
@@ -113,6 +115,19 @@ class MockQuery {
     return this
   }
 
+  order(column: string, options?: { ascending?: boolean }) {
+    this.orderBy = {
+      column,
+      ascending: options?.ascending !== false
+    }
+    return this
+  }
+
+  limit(count: number) {
+    this.limitValue = count
+    return this
+  }
+
   then(onfulfilled?: (value: any) => any, onrejected?: (reason: any) => any) {
     return this.execute().then(onfulfilled, onrejected)
   }
@@ -138,18 +153,89 @@ class MockQuery {
   }
 
   private async handleChatConversations() {
+    if (this.operation === 'insert') {
+      // Criar nova conversa
+      const conversationId = `conversation-${Date.now()}`
+      const conversation = {
+        ...this.insertData,
+        id: conversationId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'active'
+      }
+
+      this.data.chat_conversations.set(conversationId, conversation)
+      this.data.chat_messages.set(conversationId, [])
+      return { data: conversation, error: null }
+    }
+
     if (this.operation === 'update') {
       // Simular update de conversa
       const idFilter = this.filters.find(f => f.column === 'id')
       if (idFilter) {
         const conversation = this.data.chat_conversations.get(idFilter.value)
         if (conversation) {
-          const updated = { ...conversation, ...this.updateData }
+          const updated = {
+            ...conversation,
+            ...this.updateData,
+            updated_at: new Date().toISOString()
+          }
           this.data.chat_conversations.set(idFilter.value, updated)
           return { data: updated, error: null }
         }
       }
       return { data: null, error: null }
+    }
+
+    if (this.operation === 'select') {
+      // Buscar conversas
+      const userIdFilter = this.filters.find(f => f.column === 'user_id')
+      const coordinatorIdFilter = this.filters.find(f => f.column === 'coordinator_id')
+      const statusFilter = this.filters.find(f => f.column === 'status')
+      const humanRequestedFilter = this.filters.find(f => f.column === 'human_requested')
+
+      let conversations = Array.from(this.data.chat_conversations.values())
+
+      // Aplicar filtros
+      if (userIdFilter) {
+        conversations = conversations.filter(c => c.user_id === userIdFilter.value)
+      }
+      if (coordinatorIdFilter) {
+        conversations = conversations.filter(c => c.coordinator_id === coordinatorIdFilter.value)
+      }
+      if (statusFilter) {
+        conversations = conversations.filter(c => c.status === statusFilter.value)
+      }
+      if (humanRequestedFilter) {
+        conversations = conversations.filter(c => c.human_requested === humanRequestedFilter.value)
+      }
+
+      // Se tem select específico com mensagens, incluir mensagens
+      if (this.columns && this.columns.includes('messages')) {
+        conversations = conversations.map(conv => ({
+          ...conv,
+          messages: this.data.chat_messages.get(conv.id) || []
+        }))
+      }
+
+      // Aplicar ordenação
+      if (this.orderBy) {
+        conversations.sort((a, b) => {
+          const aVal = a[this.orderBy!.column]
+          const bVal = b[this.orderBy!.column]
+
+          if (aVal < bVal) return this.orderBy!.ascending ? -1 : 1
+          if (aVal > bVal) return this.orderBy!.ascending ? 1 : -1
+          return 0
+        })
+      }
+
+      // Aplicar limite
+      if (this.limitValue) {
+        conversations = conversations.slice(0, this.limitValue)
+      }
+
+      return { data: this.isSingle ? conversations[0] || null : conversations, error: null }
     }
 
     return { data: null, error: null }
@@ -165,12 +251,53 @@ class MockQuery {
 
       const message = {
         ...this.insertData,
-        id: Date.now().toString(),
+        id: `message-${Date.now()}`,
         created_at: new Date().toISOString()
       }
 
       this.data.chat_messages.get(conversationId)?.push(message)
+
+      // Atualizar timestamp da conversa
+      const conversation = this.data.chat_conversations.get(conversationId)
+      if (conversation) {
+        conversation.updated_at = new Date().toISOString()
+      }
+
       return { data: message, error: null }
+    }
+
+    if (this.operation === 'select') {
+      // Buscar mensagens
+      const conversationIdFilter = this.filters.find(f => f.column === 'conversation_id')
+
+      if (conversationIdFilter) {
+        const messages = this.data.chat_messages.get(conversationIdFilter.value) || []
+        return { data: messages, error: null }
+      }
+
+      // Buscar todas as mensagens se não tem filtro específico
+      const allMessages: any[] = []
+      const messagesCollections = Array.from(this.data.chat_messages.values())
+      for (const messages of messagesCollections) {
+        allMessages.push(...messages)
+      }
+      return { data: allMessages, error: null }
+    }
+
+    if (this.operation === 'update') {
+      // Atualizar mensagem (ex: marcar como lida)
+      const idFilter = this.filters.find(f => f.column === 'id')
+      if (idFilter) {
+        const messagesCollections = Array.from(this.data.chat_messages.values())
+        for (const messages of messagesCollections) {
+          const messageIndex = messages.findIndex((m: any) => m.id === idFilter.value)
+          if (messageIndex !== -1) {
+            messages[messageIndex] = { ...messages[messageIndex], ...this.updateData }
+            return { data: messages[messageIndex], error: null }
+          }
+        }
+      }
+      return { data: null, error: null }
     }
 
     return { data: null, error: null }
