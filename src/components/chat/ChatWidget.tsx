@@ -430,8 +430,9 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
       } else {
         // Verificar mensagens e status quando em chat humano
         checkConversationStatus()
+        loadMessages(conversation.id) // Recarregar mensagens mais frequentemente em chat humano
       }
-    }, 2000) // Reduzido para 2 segundos para melhor responsividade
+    }, chatStatus === 'active_human' ? 2000 : 5000) // 2s para chat humano, 5s para outros
 
     return () => clearInterval(interval)
   }, [conversation, chatStatus])

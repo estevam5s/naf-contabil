@@ -65,10 +65,21 @@ export async function POST(request: NextRequest) {
         sender_name: sender_name || (sender_type === 'user' ? 'Usuário' : 'Assistente'),
         is_ai_response
       })
-      .select()
-      .single()
 
-    if (messageError) throw messageError
+    console.log('💾 Resultado da inserção da mensagem:', { data: message, error: messageError })
+
+    if (messageError) {
+      console.error('❌ Erro ao inserir mensagem:', messageError)
+      throw messageError
+    }
+
+    if (!message) {
+      console.error('❌ Nenhuma mensagem retornada')
+      return NextResponse.json(
+        { error: 'Erro ao inserir mensagem - dados não retornados' },
+        { status: 500 }
+      )
+    }
 
     // Atualizar timestamp da conversa
     await supabaseAdmin
@@ -90,25 +101,47 @@ export async function POST(request: NextRequest) {
 // PATCH - Marcar mensagens como lidas
 export async function PATCH(request: NextRequest) {
   try {
-    const { conversation_id, sender_type } = await request.json()
+    const { message_id, message_ids, conversation_id, sender_type, is_read } = await request.json()
 
-    if (!conversation_id || !sender_type) {
-      return NextResponse.json(
-        { error: 'Parâmetros obrigatórios não fornecidos' },
-        { status: 400 }
-      )
+    // Marcar mensagem específica como lida
+    if (message_id) {
+      const { error } = await supabaseAdmin
+        .from('chat_messages')
+        .update({ is_read: is_read !== undefined ? is_read : true })
+        .eq('id', message_id)
+
+      if (error) throw error
+      return NextResponse.json({ success: true })
     }
 
-    const { error } = await supabaseAdmin
-      .from('chat_messages')
-      .update({ is_read: true })
-      .eq('conversation_id', conversation_id)
-      .eq('sender_type', sender_type)
-      .eq('is_read', false)
+    // Marcar múltiplas mensagens como lidas
+    if (message_ids && Array.isArray(message_ids)) {
+      const { error } = await supabaseAdmin
+        .from('chat_messages')
+        .update({ is_read: true })
+        .in('id', message_ids)
 
-    if (error) throw error
+      if (error) throw error
+      return NextResponse.json({ success: true })
+    }
 
-    return NextResponse.json({ success: true })
+    // Marcar todas as mensagens de um tipo em uma conversa como lidas
+    if (conversation_id && sender_type) {
+      const { error } = await supabaseAdmin
+        .from('chat_messages')
+        .update({ is_read: true })
+        .eq('conversation_id', conversation_id)
+        .eq('sender_type', sender_type)
+        .eq('is_read', false)
+
+      if (error) throw error
+      return NextResponse.json({ success: true })
+    }
+
+    return NextResponse.json(
+      { error: 'Parâmetros obrigatórios não fornecidos' },
+      { status: 400 }
+    )
 
   } catch (error) {
     console.error('Erro ao marcar mensagens como lidas:', error)

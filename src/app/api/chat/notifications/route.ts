@@ -40,14 +40,15 @@ export async function GET(request: NextRequest) {
         timestamp: new Date().toISOString()
       })
 
-      // Verificar novas solicitações de chat a cada 5 segundos
+      // Verificar novas solicitações de chat e mensagens a cada 3 segundos
       const interval = setInterval(async () => {
         try {
           await checkForNewChatRequests(coordinatorId, sendNotification)
+          await checkForNewMessages(coordinatorId, sendNotification)
         } catch (error) {
-          console.error('Erro ao verificar solicitações:', error)
+          console.error('Erro ao verificar notificações:', error)
         }
-      }, 5000)
+      }, 3000)
 
       // Notificações removidas - apenas dados reais
 
@@ -145,6 +146,58 @@ function getRequestUrgency(requestTime: string): string {
   if (waitingMinutes > 10) return 'high'
   if (waitingMinutes > 5) return 'medium'
   return 'normal'
+}
+
+// Função para verificar novas mensagens em chats ativos do coordenador
+async function checkForNewMessages(coordinatorId: string, sendNotification: Function) {
+  try {
+    // Buscar conversas onde o coordenador está ativo
+    const { data: conversations, error } = await supabaseAdmin
+      .from('chat_conversations')
+      .select(`
+        *,
+        messages:chat_messages(
+          id,
+          content,
+          sender_type,
+          sender_name,
+          created_at,
+          is_read
+        )
+      `)
+      .eq('coordinator_id', coordinatorId)
+      .eq('status', 'active_human')
+      .order('updated_at', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    if (conversations && conversations.length > 0) {
+      conversations.forEach((conv: any) => {
+        // Verificar se há mensagens não lidas do usuário
+        const unreadUserMessages = conv.messages?.filter(
+          (msg: any) => msg.sender_type === 'user' && !msg.is_read
+        ) || []
+
+        if (unreadUserMessages.length > 0) {
+          const latestMessage = unreadUserMessages[0]
+          sendNotification({
+            type: 'new_message',
+            conversation_id: conv.id,
+            user_name: conv.user_name || 'Cliente',
+            message_content: latestMessage.content,
+            message_preview: latestMessage.content.substring(0, 50) + (latestMessage.content.length > 50 ? '...' : ''),
+            unread_count: unreadUserMessages.length,
+            timestamp: latestMessage.created_at
+          })
+        }
+      })
+    }
+
+  } catch (error) {
+    console.log('Erro ao verificar mensagens:', error)
+  }
 }
 
 // Função para calcular tempo de espera

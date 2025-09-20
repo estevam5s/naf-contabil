@@ -56,6 +56,9 @@ interface Conversation {
   coordinator_id?: string
   last_message?: Message
   messages?: Message[]
+  created_at: string
+  updated_at?: string
+  chat_accepted_by?: string
 }
 
 interface Coordinator {
@@ -127,9 +130,38 @@ export default function CoordinatorInterface({ coordinatorId, coordinatorName }:
       const data = await response.json()
       if (data.messages) {
         setMessages(data.messages)
+
+        // Marcar mensagens do usuário como lidas
+        const unreadUserMessages = data.messages.filter(
+          (msg: Message) => msg.sender_type === 'user' && !msg.is_read
+        )
+
+        if (unreadUserMessages.length > 0) {
+          await markMessagesAsRead(unreadUserMessages.map((msg: Message) => msg.id))
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error)
+    }
+  }
+
+  // Marcar mensagens como lidas
+  const markMessagesAsRead = async (messageIds: string[]) => {
+    try {
+      await Promise.all(messageIds.map(messageId =>
+        fetch('/api/chat/messages', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message_id: messageId,
+            is_read: true
+          })
+        })
+      ))
+    } catch (error) {
+      console.error('Erro ao marcar mensagens como lidas:', error)
     }
   }
 
@@ -326,6 +358,16 @@ export default function CoordinatorInterface({ coordinatorId, coordinatorName }:
           // Recarregar solicitações pendentes
           loadPendingRequests()
         }
+
+        // Nova mensagem recebida no chat ativo
+        if (data.type === 'new_message' && activeChat && data.conversation_id === activeChat.id) {
+          loadMessages(activeChat.id)
+
+          // Tocar som se habilitado
+          if (soundEnabled && notificationAudioRef.current) {
+            notificationAudioRef.current.play().catch(console.error)
+          }
+        }
       } catch (error) {
         console.error('Erro ao processar notificação:', error)
       }
@@ -338,12 +380,23 @@ export default function CoordinatorInterface({ coordinatorId, coordinatorName }:
     return () => {
       eventSource.close()
     }
-  }, [coordinatorId, soundEnabled])
+  }, [coordinatorId, soundEnabled, activeChat])
 
   // Carregar dados iniciais
   useEffect(() => {
     loadPendingRequests()
   }, [coordinatorId])
+
+  // Polling para mensagens do chat ativo (fallback para SSE)
+  useEffect(() => {
+    if (!activeChat) return
+
+    const interval = setInterval(() => {
+      loadMessages(activeChat.id)
+    }, 3000) // Verificar novas mensagens a cada 3 segundos
+
+    return () => clearInterval(interval)
+  }, [activeChat])
 
   // Função para calcular tempo de espera
   const getWaitingTime = (timestamp: string) => {

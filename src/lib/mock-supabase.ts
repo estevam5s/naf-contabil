@@ -105,6 +105,11 @@ class MockQuery {
     return this
   }
 
+  in(column: string, values: any[]) {
+    this.filters.push({ type: 'in', column, values })
+    return this
+  }
+
   select(columns?: string) {
     this.columns = columns
     return this
@@ -258,7 +263,8 @@ class MockQuery {
       const message = {
         ...this.insertData,
         id: `message-${Date.now()}`,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        is_read: this.insertData.is_read !== undefined ? this.insertData.is_read : false
       }
 
       this.data.chat_messages.get(conversationId)?.push(message)
@@ -293,16 +299,64 @@ class MockQuery {
     if (this.operation === 'update') {
       // Atualizar mensagem (ex: marcar como lida)
       const idFilter = this.filters.find(f => f.column === 'id')
+      const inFilter = this.filters.find(f => f.type === 'in' && f.column === 'id')
+      const conversationIdFilter = this.filters.find(f => f.column === 'conversation_id')
+      const senderTypeFilter = this.filters.find(f => f.column === 'sender_type')
+      const isReadFilter = this.filters.find(f => f.column === 'is_read')
+
+      let updatedCount = 0
+
       if (idFilter) {
+        // Atualizar mensagem específica por ID
         const messagesCollections = Array.from(this.data.chat_messages.values())
         for (const messages of messagesCollections) {
           const messageIndex = messages.findIndex((m: any) => m.id === idFilter.value)
           if (messageIndex !== -1) {
             messages[messageIndex] = { ...messages[messageIndex], ...this.updateData }
+            updatedCount++
             return { data: messages[messageIndex], error: null }
           }
         }
       }
+
+      if (inFilter) {
+        // Atualizar múltiplas mensagens por IDs
+        const messagesCollections = Array.from(this.data.chat_messages.values())
+        for (const messages of messagesCollections) {
+          for (let i = 0; i < messages.length; i++) {
+            if (inFilter.values.includes(messages[i].id)) {
+              messages[i] = { ...messages[i], ...this.updateData }
+              updatedCount++
+            }
+          }
+        }
+        return { data: null, error: null, count: updatedCount }
+      }
+
+      if (conversationIdFilter) {
+        // Atualizar mensagens de uma conversa específica
+        const messages = this.data.chat_messages.get(conversationIdFilter.value)
+        if (messages) {
+          for (let i = 0; i < messages.length; i++) {
+            let shouldUpdate = true
+
+            // Verificar filtros adicionais
+            if (senderTypeFilter && messages[i].sender_type !== senderTypeFilter.value) {
+              shouldUpdate = false
+            }
+            if (isReadFilter && messages[i].is_read !== isReadFilter.value) {
+              shouldUpdate = false
+            }
+
+            if (shouldUpdate) {
+              messages[i] = { ...messages[i], ...this.updateData }
+              updatedCount++
+            }
+          }
+        }
+        return { data: null, error: null, count: updatedCount }
+      }
+
       return { data: null, error: null }
     }
 
