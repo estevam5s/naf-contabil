@@ -210,6 +210,12 @@ class MockQuery {
         conversations = conversations.filter(c => c.human_requested === humanRequestedFilter.value)
       }
 
+      // Filtros especiais para buscar solicitações pendentes de chat humano
+      const chatAcceptedByFilter = this.filters.find(f => f.column === 'chat_accepted_by')
+      if (chatAcceptedByFilter && chatAcceptedByFilter.type === 'is' && chatAcceptedByFilter.value === null) {
+        conversations = conversations.filter(c => !c.chat_accepted_by)
+      }
+
       // Se tem select específico com mensagens, incluir mensagens
       if (this.columns && this.columns.includes('messages')) {
         conversations = conversations.map(conv => ({
