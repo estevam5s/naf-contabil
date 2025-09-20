@@ -5,8 +5,36 @@ import Link from "next/link"
 import { Calculator, FileText, Users, ArrowRight, Phone, Shield, TrendingUp, Clock, MapPin, Mail, Calendar, BookOpen, BarChart3, UserCheck, Zap, Facebook, Instagram, Linkedin } from 'lucide-react'
 import NAFServicesShowcase from "@/components/NAFServicesShowcase"
 import MainNavigation from '@/components/MainNavigation'
+import { Suspense } from 'react'
 
-export default function Home() {
+async function getStatistics() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/stats`, {
+      cache: 'no-store' // Always fetch fresh data
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch statistics')
+    }
+
+    const result = await response.json()
+    return result.data
+  } catch (error) {
+    console.error('Error fetching statistics:', error)
+    // Return fallback data if API fails
+    return {
+      totalAttendances: 2000,
+      userSatisfaction: 95,
+      availableServices: 21,
+      onlineSupport: '24h'
+    }
+  }
+}
+
+export default async function Home() {
+  // Fetch real statistics from API
+  const statisticsData = await getStatistics()
+
   const services = [
     {
       icon: Calculator,
@@ -52,11 +80,28 @@ export default function Home() {
     }
   ]
 
+  // Use real statistics from API
   const stats = [
-    { number: "2000+", label: "Atendimentos Realizados", icon: Users },
-    { number: "95%", label: "Satisfação dos Usuários", icon: TrendingUp },
-    { number: "21", label: "Serviços Disponíveis", icon: FileText },
-    { number: "24h", label: "Suporte Online", icon: Clock }
+    {
+      number: `${statisticsData.totalAttendances.toLocaleString('pt-BR')}+`,
+      label: "Atendimentos Realizados",
+      icon: Users
+    },
+    {
+      number: `${statisticsData.userSatisfaction}%`,
+      label: "Satisfação dos Usuários",
+      icon: TrendingUp
+    },
+    {
+      number: statisticsData.availableServices.toString(),
+      label: "Serviços Disponíveis",
+      icon: FileText
+    },
+    {
+      number: statisticsData.onlineSupport,
+      label: "Suporte Online",
+      icon: Clock
+    }
   ]
 
   const contactInfo = [
@@ -336,11 +381,13 @@ export default function Home() {
               {/* Statistics */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-white/5 backdrop-blur rounded-lg p-3 border border-white/10">
-                  <div className="text-blue-400 text-xl font-bold">2000+</div>
+                  <div className="text-blue-400 text-xl font-bold">
+                    {statisticsData.totalAttendances.toLocaleString('pt-BR')}+
+                  </div>
                   <div className="text-gray-400 text-xs">Atendimentos</div>
                 </div>
                 <div className="bg-white/5 backdrop-blur rounded-lg p-3 border border-white/10">
-                  <div className="text-green-400 text-xl font-bold">95%</div>
+                  <div className="text-green-400 text-xl font-bold">{statisticsData.userSatisfaction}%</div>
                   <div className="text-gray-400 text-xs">Satisfação</div>
                 </div>
               </div>
