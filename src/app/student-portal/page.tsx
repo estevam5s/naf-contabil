@@ -54,6 +54,10 @@ interface StudentProfile {
   registrationNumber: string
   specializations: string[]
   status: string
+  document: string
+  university: string
+  lastLogin?: string
+  createdAt?: string
 }
 
 interface Attendance {
