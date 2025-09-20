@@ -409,7 +409,7 @@ class ReportsService {
     return 'Iniciante'
   }
 
-  // Exportar relatório para PDF com gráficos
+  // Exportar relatório para PDF com gráficos (versão simplificada)
   async exportToPDF(reportType: 'attendance' | 'demand' | 'student', data: any[], chartData: ChartData): Promise<Buffer> {
     try {
       const doc = new (jsPDF as any)()
@@ -435,7 +435,9 @@ class ReportsService {
         doc.text('Distribuição por Status:', 14, currentY)
         currentY += 5
         chartData.pieCharts.statusDistribution.forEach(item => {
-          doc.text(`• ${item.label}: ${item.value} (${((item.value / chartData.pieCharts.statusDistribution.reduce((sum, x) => sum + x.value, 0)) * 100).toFixed(1)}%)`, 20, currentY)
+          const total = chartData.pieCharts.statusDistribution.reduce((sum, x) => sum + x.value, 0)
+          const percentage = ((item.value / total) * 100).toFixed(1)
+          doc.text(`• ${item.label}: ${item.value} (${percentage}%)`, 20, currentY)
           currentY += 4
         })
         currentY += 5
@@ -463,7 +465,7 @@ class ReportsService {
         currentY += 10
       }
 
-      // Adicionar dados tabulares
+      // Adicionar dados detalhados de forma simples
       if (currentY > 250) {
         doc.addPage()
         currentY = 20
@@ -473,51 +475,30 @@ class ReportsService {
       doc.text('Dados Detalhados:', 14, currentY)
       currentY += 10
 
-      // Configurar tabela baseada no tipo
-      let tableData: any[] = []
-      let headers: string[] = []
+      doc.setFontSize(8)
 
-      switch (reportType) {
-        case 'attendance':
-          headers = ['Protocolo', 'Estudante', 'Categoria', 'Horas', 'Status', 'Data']
-          tableData = data.slice(0, 50).map(item => [
-            item.protocol || 'N/A',
-            item.user?.name || 'N/A',
-            item.category || 'N/A',
-            item.hours || 0,
-            item.status || 'N/A',
-            new Date(item.createdAt).toLocaleDateString('pt-BR')
-          ])
-          break
-        case 'demand':
-          headers = ['Protocolo', 'Cliente', 'Serviço', 'Status', 'Atendimentos', 'Data']
-          tableData = data.slice(0, 50).map(item => [
-            item.protocolNumber || 'N/A',
-            item.clientName || 'N/A',
-            item.service?.name || 'N/A',
-            item.status || 'N/A',
-            item.attendances?.length || 0,
-            new Date(item.createdAt).toLocaleDateString('pt-BR')
-          ])
-          break
-        case 'student':
-          headers = ['Nome', 'Email', 'Atendimentos', 'Horas', 'Performance']
-          tableData = data.slice(0, 50).map(item => [
-            item.name || 'N/A',
-            item.email || 'N/A',
-            item.totalAttendances || 0,
-            item.totalHours || 0,
-            item.performance || 'N/A'
-          ])
-          break
-      }
+      // Dados simplificados sem tabela complexa
+      data.slice(0, 20).forEach((item, index) => {
+        if (currentY > 280) {
+          doc.addPage()
+          currentY = 20
+        }
 
-      (doc as any).autoTable({
-        head: [headers],
-        body: tableData,
-        startY: currentY,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [59, 130, 246] }
+        let itemText = ''
+        switch (reportType) {
+          case 'attendance':
+            itemText = `${index + 1}. ${item.protocol || 'N/A'} - ${item.user?.name || 'N/A'} - ${item.category || 'N/A'} - ${item.hours || 0}h - ${item.status || 'N/A'}`
+            break
+          case 'demand':
+            itemText = `${index + 1}. ${item.protocolNumber || 'N/A'} - ${item.clientName || 'N/A'} - ${item.service?.name || 'N/A'} - ${item.status || 'N/A'}`
+            break
+          case 'student':
+            itemText = `${index + 1}. ${item.name || 'N/A'} - ${item.email || 'N/A'} - ${item.totalAttendances || 0} atend. - ${item.totalHours || 0}h - ${item.performance || 'N/A'}`
+            break
+        }
+
+        doc.text(itemText, 14, currentY)
+        currentY += 5
       })
 
       return Buffer.from(doc.output('arraybuffer'))
@@ -915,6 +896,36 @@ export async function GET(request: NextRequest) {
             headers: {
               'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
               'Content-Disposition': `attachment; filename="relatorio-geral-${new Date().toISOString().split('T')[0]}.xlsx"`
+            }
+          })
+        }
+
+        if (format === 'pdf') {
+          const buffer = await reportsService.exportToPDF('attendance', attendanceData.data, generalChartData)
+          return new NextResponse(buffer as any, {
+            headers: {
+              'Content-Type': 'application/pdf',
+              'Content-Disposition': `attachment; filename="relatorio-geral-${new Date().toISOString().split('T')[0]}.pdf"`
+            }
+          })
+        }
+
+        if (format === 'txt') {
+          const buffer = await reportsService.exportToTXT('attendance', attendanceData.data, generalChartData)
+          return new NextResponse(buffer as any, {
+            headers: {
+              'Content-Type': 'text/plain; charset=utf-8',
+              'Content-Disposition': `attachment; filename="relatorio-geral-${new Date().toISOString().split('T')[0]}.txt"`
+            }
+          })
+        }
+
+        if (format === 'doc' || format === 'docx') {
+          const buffer = await reportsService.exportToDOCX('attendance', attendanceData.data, generalChartData)
+          return new NextResponse(buffer as any, {
+            headers: {
+              'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              'Content-Disposition': `attachment; filename="relatorio-geral-${new Date().toISOString().split('T')[0]}.docx"`
             }
           })
         }
