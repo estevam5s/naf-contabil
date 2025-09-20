@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se email já existe
-    const { data: existingUser, error: checkError } = await supabaseAdmin
+    const { data: existingUser } = await supabaseAdmin
       .from('students')
       .select('id')
       .eq('email', data.email)
@@ -116,8 +116,6 @@ export async function POST(request: NextRequest) {
     const { data: newStudent, error: insertError } = await supabaseAdmin
       .from('students')
       .insert(studentData)
-      .select('id, email, name, course, semester, status')
-      .single()
 
     if (insertError) {
       console.error('Erro ao inserir estudante:', insertError)
