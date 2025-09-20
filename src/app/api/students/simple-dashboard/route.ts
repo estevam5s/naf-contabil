@@ -1,91 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-// Mock data for testing
-const mockStudents = [
-  {
-    id: '1',
-    email: 'ana.santos@estudante.edu.br',
-    name: 'Ana Carolina Santos',
-    phone: '(11) 99999-0001',
-    course: 'Ciências Contábeis',
-    semester: '6º Semestre',
-    registration_number: '2024001001',
-    specializations: ['Imposto de Renda', 'MEI', 'Pessoa Física'],
-    status: 'ATIVO'
-  }
-]
-
-const mockAttendances = [
-  {
-    id: '1',
-    protocol: 'ATD-2025-0001',
-    client_name: 'Maria da Silva',
-    client_email: 'maria.silva@email.com',
-    client_phone: '(11) 99999-9999',
-    service_type: 'Declaração de Imposto de Renda',
-    service_description: 'Cliente precisa de ajuda com declaração de IR 2024.',
-    scheduled_date: '2025-01-20',
-    scheduled_time: '09:00',
-    status: 'CONCLUIDO',
-    urgency: 'MEDIA',
-    is_online: false,
-    client_satisfaction_rating: 5,
-    supervisor_validation: true
-  },
-  {
-    id: '2',
-    protocol: 'ATD-2025-0002',
-    client_name: 'João Santos',
-    client_email: 'joao@email.com',
-    client_phone: '(11) 88888-8888',
-    service_type: 'Orientação MEI',
-    service_description: 'Orientação sobre obrigações do MEI.',
-    scheduled_date: '2025-01-22',
-    scheduled_time: '14:00',
-    status: 'AGENDADO',
-    urgency: 'BAIXA',
-    is_online: true,
-    supervisor_validation: false
-  }
-]
-
-const mockTrainings = [
-  {
-    id: '1',
-    training_id: '1',
-    is_completed: true,
-    score: 95,
-    started_at: '2025-01-10',
-    completed_at: '2025-01-12',
-    training: {
-      id: '1',
-      title: 'Fundamentos da Legislação Tributária',
-      description: 'Conceitos básicos sobre legislação tributária brasileira',
-      duration_minutes: 150,
-      difficulty: 'BÁSICO',
-      topics: ['CTN', 'Tributos Federais', 'ICMS', 'ISS'],
-      is_mandatory: true
-    }
-  },
-  {
-    id: '2',
-    training_id: '2',
-    is_completed: false,
-    started_at: '2025-01-15',
-    training: {
-      id: '2',
-      title: 'Declaração de Imposto de Renda PF',
-      description: 'Curso completo sobre DIRPF e suas particularidades',
-      duration_minutes: 255,
-      difficulty: 'INTERMEDIÁRIO',
-      topics: ['DIRPF', 'Deduções', 'Dependentes', 'Bens e Direitos'],
-      is_mandatory: true
-    }
-  }
-]
+// Sistema de cache simples para melhorar performance
+const cache = new Map()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
 
 async function verifyStudentToken(token: string): Promise<any> {
   try {
@@ -101,6 +22,115 @@ async function verifyStudentToken(token: string): Promise<any> {
     return decoded
   } catch (error) {
     return null
+  }
+}
+
+async function getStudentData(studentId: string) {
+  const cacheKey = `student_${studentId}`
+  const cached = cache.get(cacheKey)
+
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    return cached.data
+  }
+
+  try {
+    // Buscar dados do estudante
+    const { data: student, error: studentError } = await supabaseAdmin
+      .from('students')
+      .select('*')
+      .eq('id', studentId)
+      .single()
+
+    if (studentError) throw studentError
+
+    // Buscar atendimentos do estudante
+    const { data: attendances, error: attendancesError } = await supabaseAdmin
+      .from('attendances')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('scheduled_date', { ascending: false })
+      .limit(10)
+
+    if (attendancesError) throw attendancesError
+
+    // Buscar progresso em treinamentos
+    const { data: trainingProgress, error: trainingError } = await supabaseAdmin
+      .from('student_training_progress')
+      .select(`
+        *,
+        training:trainings(*)
+      `)
+      .eq('student_id', studentId)
+
+    if (trainingError) throw trainingError
+
+    // Buscar avaliações do estudante
+    const { data: evaluations, error: evaluationsError } = await supabaseAdmin
+      .from('student_evaluations')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('evaluation_date', { ascending: false })
+      .limit(5)
+
+    if (evaluationsError) throw evaluationsError
+
+    // Calcular estatísticas
+    const totalAttendances = attendances?.length || 0
+    const completedAttendances = attendances?.filter(a => a.status === 'CONCLUIDO').length || 0
+    const ratingsWithValues = attendances?.filter(a => a.client_satisfaction_rating) || []
+    const avgRating = ratingsWithValues.length > 0
+      ? ratingsWithValues.reduce((sum, a) => sum + a.client_satisfaction_rating, 0) / ratingsWithValues.length
+      : 0
+
+    const completedTrainings = trainingProgress?.filter(t => t.is_completed).length || 0
+    const totalTrainings = trainingProgress?.length || 0
+
+    // Calcular performance geral das avaliações
+    const avgOverallScore = evaluations?.length > 0
+      ? evaluations.reduce((sum, e) => sum + (e.overall_score || 0), 0) / evaluations.length
+      : 0
+
+    const result = {
+      profile: {
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        phone: student.phone,
+        course: student.course,
+        semester: student.semester,
+        registrationNumber: student.registration_number,
+        specializations: student.specializations || [],
+        status: student.status,
+        document: student.document,
+        university: student.university,
+        availableHours: student.available_hours || [],
+        lastLogin: student.last_login
+      },
+      stats: {
+        totalAttendances,
+        completedAttendances,
+        avgRating: Math.round(avgRating * 10) / 10,
+        completedTrainings,
+        totalTrainings,
+        avgPerformanceScore: Math.round(avgOverallScore * 100) / 100,
+        successRate: totalAttendances > 0 ? Math.round((completedAttendances / totalAttendances) * 100) : 0
+      },
+      attendances: attendances || [],
+      trainings: trainingProgress || [],
+      recentEvaluations: evaluations || []
+    }
+
+    // Cache do resultado
+    cache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    })
+
+    return result
+
+  } catch (error) {
+    console.error('Erro ao buscar dados do estudante:', error)
+    throw error
   }
 }
 
@@ -124,49 +154,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Find student
-    const student = mockStudents.find(s => s.id === studentAuth.studentId)
-    if (!student) {
+    // Buscar dados completos do estudante
+    const studentData = await getStudentData(studentAuth.studentId)
+
+    if (!studentData.profile) {
       return NextResponse.json(
         { message: 'Estudante não encontrado' },
         { status: 404 }
       )
     }
 
-    // Calculate statistics
-    const totalAttendances = mockAttendances.length
-    const completedAttendances = mockAttendances.filter(a => a.status === 'CONCLUIDO').length
-    const avgRating = mockAttendances
-      .filter(a => a.client_satisfaction_rating)
-      .reduce((sum, a) => sum + (a.client_satisfaction_rating || 0), 0) / mockAttendances.filter(a => a.client_satisfaction_rating).length || 0
+    // Registrar atividade de acesso
+    await supabaseAdmin
+      .from('student_activity_logs')
+      .insert({
+        student_id: studentAuth.studentId,
+        activity_type: 'DASHBOARD_ACCESS',
+        activity_data: {
+          timestamp: new Date().toISOString(),
+          user_agent: request.headers.get('user-agent')
+        },
+        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip')
+      })
 
-    const completedTrainings = mockTrainings.filter(t => t.is_completed).length
-    const totalTrainings = mockTrainings.length
-
-    const responseData = {
-      profile: {
-        id: student.id,
-        name: student.name,
-        email: student.email,
-        phone: student.phone,
-        course: student.course,
-        semester: student.semester,
-        registrationNumber: student.registration_number,
-        specializations: student.specializations || [],
-        status: student.status
-      },
-      stats: {
-        totalAttendances,
-        completedAttendances,
-        avgRating: Math.round(avgRating * 10) / 10,
-        completedTrainings,
-        totalTrainings
-      },
-      attendances: mockAttendances,
-      trainings: mockTrainings
-    }
-
-    return NextResponse.json(responseData)
+    return NextResponse.json(studentData)
 
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error)
