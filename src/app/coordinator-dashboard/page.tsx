@@ -28,7 +28,6 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import CoordinatorInterface from '@/components/chat/CoordinatorInterface'
-import NotificationCenter from '@/components/NotificationCenter'
 
 interface MetricData {
   period: string
@@ -268,7 +267,6 @@ export default function CoordinatorDashboard() {
                 <option value="quarter">Este Trimestre</option>
                 <option value="year">Este Ano</option>
               </select>
-              <NotificationCenter coordinatorId={user?.id || 'coordinator'} />
               <Button onClick={() => exportReport('geral')}>
                 <Download className="h-4 w-4 mr-2" />
                 Exportar Relatório

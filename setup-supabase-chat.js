@@ -18,10 +18,10 @@ async function setupSupabaseChat() {
     console.log('Ping response:', pingResponse.status);
 
     if (pingResponse.ok || pingResponse.status === 404) {
-      console.log('✅ Conexão com Supabase estabelecida');
+      // console.log('✅ Conexão com Supabase estabelecida');
 
       // Tentar criar/verificar tabela de conversas
-      console.log('📋 Verificando tabelas de chat...');
+      // console.log('📋 Verificando tabelas de chat...');
 
       // Primeiro, vamos testar se conseguimos fazer uma query básica
       const testResponse = await fetch(`${SUPABASE_URL}/rest/v1/chat_conversations?limit=1`, {
