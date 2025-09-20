@@ -204,6 +204,23 @@ class MockQuery {
       // Aplicar filtros
       if (userIdFilter) {
         conversations = conversations.filter(c => c.user_id === userIdFilter.value)
+
+        // Para buscar conversa por user_id (retornar sempre a mais recente)
+        if (conversations.length > 0) {
+          // Ordenar por data de criação (mais recente primeiro)
+          conversations.sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
+
+          if (this.isSingle) {
+            // Se tem select específico com mensagens, incluir mensagens
+            if (this.columns && this.columns.includes('messages')) {
+              conversations[0].messages = this.data.chat_messages.get(conversations[0].id) || []
+            }
+            return { data: conversations[0], error: null }
+          }
+        } else if (this.isSingle) {
+          // Se não encontrou e é single, retornar null
+          return { data: null, error: null }
+        }
       }
       if (coordinatorIdFilter) {
         conversations = conversations.filter(c => c.coordinator_id === coordinatorIdFilter.value)

@@ -45,18 +45,20 @@ export async function GET(request: NextRequest) {
     }
 
     if (userId) {
-      // Usuário buscando sua conversa
-      const { data: conversation, error } = await supabaseAdmin
+      // Usuário buscando sua conversa (mais recente)
+      const { data: conversations, error } = await supabaseAdmin
         .from('chat_conversations')
         .select(`
           *,
           messages:chat_messages(*)
         `)
         .eq('user_id', userId)
-        .single()
+        .order('created_at', { ascending: false })
+        .limit(1)
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) throw error
 
+      const conversation = conversations && conversations.length > 0 ? conversations[0] : null
       return NextResponse.json({ conversation })
     }
 

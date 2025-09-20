@@ -43,6 +43,9 @@ interface Conversation {
   status: string
   is_online?: boolean
   unread_count?: number
+  human_requested?: boolean
+  coordinator_id?: string
+  chat_accepted_by?: string
 }
 
 export default function ChatWidget() {
@@ -78,6 +81,31 @@ export default function ChatWidget() {
 
   const initializeConversation = async () => {
     try {
+      // Primeiro tentar buscar conversa existente
+      const existingResponse = await fetch(`/api/chat/conversations?user_id=${userId}`)
+      const existingData = await existingResponse.json()
+
+      if (existingData.conversation) {
+        // Conversa já existe, carregar mensagens
+        setConversation(existingData.conversation)
+
+        // Verificar status da conversa
+        if (existingData.conversation.human_requested) {
+          if (existingData.conversation.coordinator_id) {
+            setChatStatus('active_human')
+            setRequestHumanAgent(false)
+          } else {
+            setChatStatus('waiting_human')
+            setRequestHumanAgent(true)
+          }
+        }
+
+        // Carregar mensagens existentes
+        await loadMessages(existingData.conversation.id)
+        return
+      }
+
+      // Se não existe, criar nova
       const response = await fetch('/api/chat/conversations', {
         method: 'POST',
         headers: {
@@ -93,7 +121,7 @@ export default function ChatWidget() {
       const data = await response.json()
       if (data.conversation) {
         setConversation(data.conversation)
-        // Enviar mensagem de boas-vindas
+        // Só enviar boas-vindas se for conversa nova
         await sendWelcomeMessage(data.conversation.id)
       }
     } catch (error) {
@@ -102,21 +130,16 @@ export default function ChatWidget() {
   }
 
   const sendWelcomeMessage = async (conversationId: string) => {
-    const welcomeMessage = `👋 **Olá! Bem-vindo ao NAF Estácio Florianópolis!**
+    const welcomeMessage = `👋 **Olá! Bem-vindo ao NAF Estácio!**
 
-Sou seu assistente virtual e estou aqui para ajudar com suas dúvidas sobre:
-
-• **📊 Declaração de Imposto de Renda**
-• **🏢 Formalização MEI e CNPJ**
-• **💼 Consultoria fiscal básica**
-• **📈 Planejamento tributário**
-• **📋 Orientação contábil**
-• **🎯 Serviços empresariais**
+Sou seu assistente virtual para dúvidas sobre:
+• 📊 Imposto de Renda
+• 🏢 MEI e CNPJ
+• 💼 Consultoria fiscal
 
 Como posso ajudar você hoje?
 
----
-💡 *Dica: Se precisar de atendimento personalizado, clique em "Falar com especialista" ou digite sua solicitação!*`
+💡 *Para atendimento personalizado, clique em "Falar com especialista"*`
 
     const message: Message = {
       id: generateId(),
@@ -399,23 +422,42 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
         // Atualizar status baseado no status da conversa
         if (conv.status === 'ended' && chatStatus !== 'ended') {
           setChatStatus('ended')
+          loadMessages(conversation.id) // Carregar mensagens finais
         } else if (conv.status === 'active_human' && chatStatus !== 'active_human') {
           setChatStatus('active_human')
           setRequestHumanAgent(false)
+          loadMessages(conversation.id) // Carregar mensagens do coordenador
         } else if (conv.chat_accepted_by && conv.coordinator_id && chatStatus !== 'active_human') {
           // Se foi aceito por um coordenador, considerar como ativo mesmo que status não esteja atualizado
           setChatStatus('active_human')
           setRequestHumanAgent(false)
+          loadMessages(conversation.id) // Carregar mensagens do coordenador
         } else if (conv.status === 'waiting_human' && chatStatus !== 'waiting_human' && !conv.chat_accepted_by) {
           // Só mostrar como waiting se realmente não foi aceito por ninguém
           setChatStatus('waiting_human')
         }
-
-        // Sempre carrega mensagens para pegar novas mensagens do coordenador
-        loadMessages(conversation.id)
       }
     } catch (error) {
       console.error('Erro ao verificar status da conversa:', error)
+    }
+  }
+
+  // Função otimizada para carregar apenas mensagens novas
+  const loadNewMessages = async (conversationId: string) => {
+    try {
+      const response = await fetch(`/api/chat/messages?conversation_id=${conversationId}`)
+      const data = await response.json()
+      if (data.messages) {
+        const currentMessageCount = messages.length
+        const newMessageCount = data.messages.length
+
+        // Só atualizar se houver mensagens novas
+        if (newMessageCount > currentMessageCount) {
+          setMessages(data.messages)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar mensagens novas:', error)
     }
   }
 
@@ -427,12 +469,14 @@ Em breve um especialista entrará neste chat para ajudá-lo!`,
       if (chatStatus === 'ai') {
         // Verificar apenas status quando em modo AI
         checkConversationStatus()
-      } else {
-        // Verificar mensagens e status quando em chat humano
+      } else if (chatStatus === 'waiting_human') {
+        // Verificar se coordenador aceitou
         checkConversationStatus()
-        loadMessages(conversation.id) // Recarregar mensagens mais frequentemente em chat humano
+      } else if (chatStatus === 'active_human') {
+        // Verificar novas mensagens apenas (sem reload completo)
+        loadNewMessages(conversation.id)
       }
-    }, chatStatus === 'active_human' ? 2000 : 5000) // 2s para chat humano, 5s para outros
+    }, chatStatus === 'active_human' ? 3000 : 6000) // 3s para chat humano, 6s para outros
 
     return () => clearInterval(interval)
   }, [conversation, chatStatus])
