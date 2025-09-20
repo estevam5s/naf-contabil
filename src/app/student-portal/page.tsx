@@ -161,7 +161,7 @@ export default function StudentPortal() {
         setUser(JSON.parse(userData))
 
         // Buscar dados do dashboard
-        const response = await fetch('/api/students/simple-dashboard', {
+        const response = await fetch('/api/students/dashboard', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -215,7 +215,19 @@ export default function StudentPortal() {
   const exportReport = async (format: string = 'json') => {
     try {
       const token = localStorage.getItem('student_token')
-      const response = await fetch(`/api/students/reports?format=${format}`, {
+
+      // Verificar se o token existe
+      if (!token) {
+        alert('❌ Sessão expirada. Faça login novamente.')
+        handleLogout()
+        return
+      }
+
+      // Mostrar loading
+      const loadingMessage = format === 'excel' ? 'Gerando relatório Excel...' : 'Gerando relatório JSON...'
+      console.log(loadingMessage)
+
+      const response = await fetch(`/api/students/reports-mock?format=${format}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -228,18 +240,40 @@ export default function StudentPortal() {
           const a = document.createElement('a')
           a.style.display = 'none'
           a.href = url
-          a.download = `meu-relatorio-${new Date().toISOString().split('T')[0]}.xlsx`
+          a.download = `relatorio-estudante-${new Date().toISOString().split('T')[0]}.xlsx`
           document.body.appendChild(a)
           a.click()
           window.URL.revokeObjectURL(url)
           document.body.removeChild(a)
+          alert('✅ Relatório Excel baixado com sucesso!')
         } else {
           const data = await response.json()
-          console.log('Relatório gerado:', data)
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.style.display = 'none'
+          a.href = url
+          a.download = `relatorio-estudante-${new Date().toISOString().split('T')[0]}.json`
+          document.body.appendChild(a)
+          a.click()
+          window.URL.revokeObjectURL(url)
+          document.body.removeChild(a)
+          alert('✅ Relatório JSON baixado com sucesso!')
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+
+        if (response.status === 401) {
+          alert('❌ Sessão expirada. Faça login novamente.')
+          handleLogout()
+        } else {
+          throw new Error(errorData.message || `Erro ao gerar relatório: ${response.status}`)
         }
       }
     } catch (error) {
       console.error('Erro ao exportar relatório:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+      alert(`❌ Erro ao exportar relatório: ${errorMessage}`)
     }
   }
 

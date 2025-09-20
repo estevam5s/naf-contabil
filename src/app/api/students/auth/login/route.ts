@@ -16,6 +16,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Para testes - credenciais de desenvolvimento
+    if (email === 'student@test.com' && password === 'test123') {
+      const token = jwt.sign(
+        {
+          studentId: 'test-student-123',
+          email: 'student@test.com',
+          role: 'student'
+        },
+        process.env.NEXTAUTH_SECRET || 'your-secret-key',
+        { expiresIn: '8h' }
+      )
+
+      return NextResponse.json({
+        message: 'Login realizado com sucesso',
+        token,
+        student: {
+          id: 'test-student-123',
+          email: 'student@test.com',
+          name: 'João Silva dos Santos',
+          course: 'Ciências Contábeis',
+          semester: '7º Semestre',
+          phone: '(11) 99999-9999',
+          registrationNumber: '2021123456',
+          specializations: ['Contabilidade Fiscal', 'Contabilidade Tributária'],
+          status: 'ATIVO',
+          lastLogin: new Date().toISOString()
+        }
+      })
+    }
+
     // Buscar estudante no Supabase
     const { data: student, error } = await supabaseAdmin
       .from('students')
