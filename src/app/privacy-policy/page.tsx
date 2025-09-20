@@ -302,7 +302,7 @@ export default function PrivacyPolicy() {
               <CardContent>
                 <div className="space-y-3">
                   <div>
-                    <p className="font-semibold">Prof. Dr. João Silva</p>
+                    <p className="font-semibold">Prof. Vagner Cordeiro</p>
                     <p className="text-sm text-gray-600">Coordenador NAF</p>
                   </div>
 
